@@ -40,4 +40,4 @@ with open(outfile, 'w', newline='') as csvfile:
             if parts[0] in names: 
                 name = names[parts[0]]
             
-            filewriter.writerow([parts[0], name, parts[1]])
+            filewriter.writerow([parts[0] + "|" + name, parts[1]])
