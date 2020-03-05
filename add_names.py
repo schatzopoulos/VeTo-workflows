@@ -51,7 +51,7 @@ with open(outfile, 'w', newline='') as csvfile:
             row_data = []
             # loop in all columns except last one
             for col in range(len(parts)-1):
-                print(parts[col])
+                # print(parts[col])
                 value = 'Unknown'
                 if parts[col] in names:
                     value = names[parts[col]]
