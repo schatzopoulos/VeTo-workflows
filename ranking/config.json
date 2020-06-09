@@ -1,16 +1,15 @@
 {
-    "indir": "./data/DBLP/nodes/",
-    "irdir": "./data/DBLP/relations/",
-    "algorithm": "DynP",
-    "hin_out": "./data/out/HIN.csv",
-    "analysis_out": "./data/out/PR.csv",
-    "final_out": "./data/out/PR_final.csv",
+    "indir": "/dataX/SciNeM-data/DBLP_sample/nodes/",
+    "irdir": "/dataX/SciNeM-data/DBLP_sample/relations/",
+    "analysis_out": "./analysisout.csv",
+    "final_out": "./FINAL-lala",
     "pr_alpha": 0.5,
     "pr_tol": 0.00000000001,
+    "partitions": 1,
     "query": {
-        "metapath": "APC",
+        "metapath": "APA",
         "constraints": {
+            "A": " name = 'Makoto Satoh'"
         }
     }
-    
 }

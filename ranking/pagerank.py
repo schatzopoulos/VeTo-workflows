@@ -1,57 +1,94 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+from __future__ import print_function
+import re
 import sys
-import numpy as np
-from scipy import sparse
-from fast_pagerank import pagerank_power
-import csv
-import json
+import time
+from math import ceil
+from operator import add
+from pyspark.sql import SparkSession
+import utils
 
-if len(sys.argv) != 3:
-    print("Usage: python3 pagerank.py -c <config_file>")
-    sys.exit(-1)
+def compute_contribs(urls, rank):
+    """Calculates URL contributions to the rank of other URLs."""
+    num_urls = len(urls)
+    
+    for url in urls:
+        yield (url, rank / num_urls)
 
-with open(sys.argv[2]) as config_file:
-    config = json.load(config_file)
-    inputfile = config["hin_out"]
-    alpha = config["pr_alpha"]
-    tol = config["pr_tol"]
-    outfile = config["analysis_out"]
+def pagerank_score(rank, alpha, initial_pagerank):
+    return alpha * rank  + (1 - alpha) * initial_pagerank
 
-# load adjacency matrix from file
-print("Ranking\t1\tLoading Adjacency Matrix", flush=True)
-A = np.loadtxt(inputfile, delimiter='\t', usecols={0, 1}, dtype=np.int32)
-W = np.loadtxt(inputfile, delimiter='\t', usecols={2}, dtype=np.float64)
+def execute(links, alpha, convergence_error, partitions_num, outfile):
+    print("Ranking\t1\tPreparing Network", flush=True)
 
-if (A.size <= 2):
-    # create empty file
-    open(outfile, 'a').close()
-    sys.exit(0)
+    # partition rdd and cache
+    links = links.partitionBy(partitions_num).cache()
 
-# normalize edge weights
-total_sum = np.sum(W)
-W /= total_sum
+    # print("\n##### Ranking #####")
+    # total number of nodes
+    node_count = links.count()
 
-# calculate max dimension
-print("Ranking\t2\tTransforming Adjacency Matrix", flush=True) 
-N = max(np.amax(A[:,0]), np.amax(A[:,1])) + 1
+    # print("Number of nodes: %s" % (node_count))
+    # print("Convergence Error: %s" % (convergence_error))
 
-# transform to sparse matrix representation
-G = sparse.csr_matrix((W, (A[:,0], A[:,1])), shape=(N, N))
+    # initialize pagerank score
+    initial_pagerank = 1 / float(node_count)
+    ranks = links.map(lambda url_neighbors: (url_neighbors[0], initial_pagerank), preservesPartitioning = True)
 
-# run pagerank
-print("Ranking\t3\tExecuting Ranking Algorithm", flush=True)
-PR = pagerank_power(G, p=alpha, tol=tol)
+    # initialize error in a high value
+    max_error = 100
+    
+    iteration = 0
 
-# sorting output
-print("Ranking\t4\tSorting Results", flush=True)
-sorted_indices = np.argsort(PR)[::-1][:len(PR)]
+    print("Ranking\t2\tExecuting Ranking Algorithm", flush=True)
 
-# filter out indices that are not in A  
-indices = np.unique(np.concatenate((A[:,0], A[:,1])))
-sorted_indices = sorted_indices[np.isin(sorted_indices, indices)]
+    # Calculates and updates URL ranks continuously using PageRank algorithm.
+    while(max_error >= convergence_error):        
 
-# write results to output file
-print("Ranking\t5\tWriting Results", flush=True)
-with open(outfile, 'w', newline='') as csvfile:
-    filewriter = csv.writer(csvfile, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-    for i in sorted_indices:
-        filewriter.writerow([i, PR[i]])
+        start_time = time.time()
+
+        prev_ranks = ranks
+
+        # find dangling nodes
+        dangling_nodes = links.filter(lambda link: not link[1])
+
+        # calculate dangling sum
+        dangling_sum = dangling_nodes.join(ranks).map(lambda x: x[1][1]).sum()
+        dangling_sum /= node_count
+
+        # add dangling sum to all nodes
+        dangling_contribs = links.mapValues(lambda x: dangling_sum)
+
+        contribs = links.join(ranks, numPartitions = links.getNumPartitions()).flatMap(
+            lambda url_urls_rank: compute_contribs(url_urls_rank[1][0], url_urls_rank[1][1]))
+        
+        contribs = contribs.union(dangling_contribs).coalesce(links.getNumPartitions())
+
+        # re-calculate pagerank score from neighbor contributions
+        ranks = contribs.reduceByKey(add, numPartitions = links.getNumPartitions()).mapValues(lambda rank: pagerank_score(rank, alpha, initial_pagerank))
+
+        # calculate error between consecutive iterations
+        max_error = ranks.join(prev_ranks).mapValues(lambda rank: abs(rank[0] - rank[1])).values().max()
+        # print("Iteration: %s - max error: %s - time: %s" % (iteration, max_error, (time.time() - start_time)))
+        iteration += 1
+    
+    print("Ranking\t3\tSorting Results", flush=True)
+    ranks.sortBy(lambda x: - x[1]).coalesce(1).map(utils.toCSVLine).saveAsTextFile(outfile)
+
+    return ranks

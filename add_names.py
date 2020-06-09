@@ -7,7 +7,7 @@ with open(sys.argv[2]) as config_file:
     metapath = config["query"]["metapath"]
     nodes_dir = config["indir"]
     outfile = config["final_out"]
-    input_pr = config["analysis_out"]
+    input_pr = config["analysis_out"] + '/part-00000'
     select_field = config["select_field"]
     first_entity = metapath[:1]
 
