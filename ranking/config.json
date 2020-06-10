@@ -9,7 +9,6 @@
     "query": {
         "metapath": "APA",
         "constraints": {
-            "A": " name = 'Makoto Satoh'"
         }
     }
 }

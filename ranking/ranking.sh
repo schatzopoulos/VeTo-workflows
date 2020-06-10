@@ -17,7 +17,7 @@ fi
 #         exit 2
 # fi
 
-if ! python3 ../add_names.py -c "$config"; then 
-        echo "Error: Finding node names"
-        exit 3
-fi
+#if ! python3 ../add_names.py -c "$config"; then 
+#        echo "Error: Finding node names"
+#        exit 3
+#fi

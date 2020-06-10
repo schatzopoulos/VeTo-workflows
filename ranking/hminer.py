@@ -31,15 +31,15 @@ with open(config_file) as fd:
 
 graph = Graph()
 
-# start_time = time.time()
+start_time = time.time()
 graph.build(spark, metapath, nodes_dir, relations_dir)
-# print("--- build graph %s ---" % (time.time() - start_time))
+print("- build graph %s ---" % (time.time() - start_time))
 
-# start_time = time.time()
-graph.transform(spark, metapath, constraints)
-# print("--- transform %s ---" % (time.time() - start_time))
+start_time = time.time()
+graph.transform(spark, metapath, constraints, partitions_num)
+print("- transform %s ---" % (time.time() - start_time))
 
-# start_time = time.time()
+start_time = time.time()
 results = graph.pagerank(alpha, tol, partitions_num, outfile)
-# print("--- pagerank %s ---" % (time.time() - start_time))
+print("- pagerank %s ---" % (time.time() - start_time))
 

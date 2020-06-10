@@ -5,15 +5,23 @@ from pyspark.sql.types import StructType, StructField, IntegerType, StringType
 from functools import reduce 
 import utils
 import pagerank
+import time
 
 class Graph:
 	
 	def build(self, spark, metapath, nodes_dir, relations_dir):
-		print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
+		# print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
+
+		start_time = time.time()
 		vertices = self.collect_vertices(spark, metapath, nodes_dir)
+		vertices.show(n=5)
+		print("--- read vertices %s %s---" % (time.time() - start_time, vertices.rdd.getNumPartitions()))
 
 		print("HIN Transformation\t2\tLoading HIN Edges", flush=True)
+		start_time = time.time()
 		edges = self.collect_edges(spark, metapath, relations_dir)
+		edges.show(n=5)
+		print("--- read edges  %s %s ---" % (time.time() - start_time, edges.rdd.getNumPartitions()))
 
 		self._graph = GraphFrame(vertices, edges)
 
@@ -91,13 +99,13 @@ class Graph:
 
 		return edges
 
-	def transform(self, spark, metapath, constraints):
+	def transform(self, spark, metapath, constraints, partitions_num):
 
 		motifs = []
 		filters = []
 		firstEdge = ''
 		lastEdge = ''
-		print("HIN Transformation\t3\tExecuting Motif Search", flush=True)
+		# print("HIN Transformation\t3\tExecuting Motif Search", flush=True)
 
 		for i in range(len(metapath)):
 			# print(e)
@@ -132,23 +140,33 @@ class Graph:
 		motif_query = ';'.join(motifs)
 		paths = self._graph.find(motif_query)
 		
+		start_time = time.time()
 		# add filters
 		for f in filters:
 			paths = paths.filter(f)
 
-		# paths.show(n=50)
+		paths = paths.coalesce(partitions_num)
+		paths.show(n=5)
+		print("--- build paths  %s %s ---" % (time.time() - start_time, paths.rdd.getNumPartitions()))
 
+		start_time = time.time()
 		# keep edges of the sub-graph based on the metapath and the constraints given 
 		self._subgraph_edges = paths.select(firstEdge + "0.src", lastEdge + str(len(metapath)-2) + ".dst")
 		self._subgraph_edges.show(n=5)
-		
+		print("--- build subgraph  %s %s ---" % (time.time() - start_time, self._subgraph_edges.rdd.getNumPartitions()))
+
 	def pagerank(self, alpha, tol, partitions_num, outfile):
-		
+		start_time = time.time()
 		# group edges based on src node
 		links = self._subgraph_edges.groupby("src").agg(collect_list("dst"))
+		links.show(n=5)
+		print("--- build links %s %s ---" % (time.time() - start_time, links.rdd.getNumPartitions()))
 
+		start_time = time.time()
 		# transform df to rdd
 		links = links.rdd.map(tuple)
+		links.take(5)
+		print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
 		# execute pagerank
 		return pagerank.execute(links, alpha, tol, partitions_num, outfile)
