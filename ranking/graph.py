@@ -8,24 +8,26 @@ import pagerank
 import time
 
 class Graph:
-	
-	def build(self, spark, metapath, nodes_dir, relations_dir):
+	_relations_dict = {}
+	_relations_idx = 0
+
+	def build(self, spark, metapath, nodes_dir, relations_dir, constraints):
 		# print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
 
 		start_time = time.time()
-		vertices = self.collect_vertices(spark, metapath, nodes_dir)
-		vertices.show(n=5)
+		vertices = self.collect_vertices(spark, metapath, nodes_dir, constraints)
+		# vertices.show(n=5)
 		print("--- read vertices %s %s---" % (time.time() - start_time, vertices.rdd.getNumPartitions()))
 
 		print("HIN Transformation\t2\tLoading HIN Edges", flush=True)
 		start_time = time.time()
 		edges = self.collect_edges(spark, metapath, relations_dir)
-		edges.show(n=5)
+		# edges.show(n=5)
 		print("--- read edges  %s %s ---" % (time.time() - start_time, edges.rdd.getNumPartitions()))
 
 		self._graph = GraphFrame(vertices, edges)
 
-	def collect_vertices(self, spark, metapath, nodes_dir):
+	def collect_vertices(self, spark, metapath, nodes_dir, constraints):
 
 		vertices = None
 		# print("##### Nodes #####")
@@ -36,26 +38,30 @@ class Graph:
 
 			# read dataframe from csv file
 			df = spark.read.csv(filepath, sep='\t', header=True, inferSchema=True)
+			
+			# if no constraint is given for this entity, 
+			# then keep only id
+			if v not in constraints:
+				df = df.select("id")
 
 			# append entity type to column 'id' and keep rest columns
-			name = 'id'
-			udf = UserDefinedFunction(lambda x: v + str(x), StringType())
-			df2 = df.select(*[udf(column).alias(name) if column == name else column for column in df.columns])
+			# udf = UserDefinedFunction(lambda x: v + str(x), StringType())
+			# df2 = df.select(*[udf(column).alias('id') if column == 'id' else column for column in df.columns])
 
-			df.unpersist()
+			# df.unpersist()
 
 			# df2.show(n=50)
 			# print(v + " :\t" + str(df2.count()))
 
 			if not vertices:
-				vertices = df2
+				vertices = df
 			else:
 				# merge dataframes by harmonizing their schema first
 				# fill with null non-common columns
-				vertices = utils.harmonize_schemas_and_combine(vertices, df2)
+				vertices = utils.harmonize_schemas_and_combine(vertices, df)
 				# vertices.show(n=50)
 
-			df2.unpersist()
+			# df2.unpersist()
 
 		# print()
 
@@ -69,30 +75,35 @@ class Graph:
 			relation = metapath[i:i+2]
 			filepath = relations_dir + relation + '.csv'
 
+			if relation not in self._relations_dict:
+				self._relations_dict[relation] = self._relations_idx
+				self._relations_idx += 1
+
+			relation_id = self._relations_dict[relation]
+
 			# read from csv file using a specific schema
 			schema = StructType([
 				StructField("src", IntegerType(), False),
 				StructField("dst", IntegerType(), False)])
 
-			df = spark.read.csv(filepath, sep='\t', header=False, schema=schema)
-			
+			df = spark.read.csv(filepath, sep='\t', header=False, schema=schema).withColumn("type", lit(relation_id))
+			# df.unpersist()
+
+			# df.show(n=3)
 			# append entity type to to ids of 'src' and 'dst'
 		 	# also append type  
-			df2 = df.select(
-				concat(lit(relation[0]), "src").alias("src"),
-				concat(lit(relation[1]), "dst").alias("dst"),
-				concat(lit(relation)).alias("type"),
-			)
-			df.unpersist()
+			# df2 = df.select(*
+			# 	lit(relation_id).alias("type")
+			# )
 
 			# print(relation + " :\t" + str(df2.count()))
 			
 			if not edges:
-				edges = df2
+				edges = df
 			else:
-				edges = edges.union(df2)
+				edges = edges.union(df)
 
-			df2.unpersist()
+			# df2.unpersist()
 			# df2.show(n=10)
 
 		# print()
@@ -121,7 +132,7 @@ class Graph:
 				motifs.append('(' + metapath[i].lower() + str(i) + ')' + '-[' + (relation).lower() + str(i)+ ']->(' + metapath[i+1].lower() + str(i+1) + ')')
 				
 				# add edge filter based on edge type
-				filters.append(relation.lower() + str(i) + ".type = '" + relation + "'")
+				filters.append(relation.lower() + str(i) + ".type = '" + str(self._relations_dict[relation]) + "'")
 
 				# add constraints
 				if metapath[i] in constraints:
@@ -145,27 +156,27 @@ class Graph:
 		for f in filters:
 			paths = paths.filter(f)
 
-		paths = paths.coalesce(partitions_num)
-		paths.show(n=5)
-		print("--- build paths  %s %s ---" % (time.time() - start_time, paths.rdd.getNumPartitions()))
+		# paths = paths.coalesce(partitions_num)
+		# paths.show(n=5)
+		# print("--- build paths  %s %s ---" % (time.time() - start_time, paths.rdd.getNumPartitions()))
 
 		start_time = time.time()
 		# keep edges of the sub-graph based on the metapath and the constraints given 
 		self._subgraph_edges = paths.select(firstEdge + "0.src", lastEdge + str(len(metapath)-2) + ".dst")
-		self._subgraph_edges.show(n=5)
+		# self._subgraph_edges.show(n=5)
 		print("--- build subgraph  %s %s ---" % (time.time() - start_time, self._subgraph_edges.rdd.getNumPartitions()))
 
 	def pagerank(self, alpha, tol, partitions_num, outfile):
 		start_time = time.time()
 		# group edges based on src node
 		links = self._subgraph_edges.groupby("src").agg(collect_list("dst"))
-		links.show(n=5)
+		# links.show(n=5)
 		print("--- build links %s %s ---" % (time.time() - start_time, links.rdd.getNumPartitions()))
 
 		start_time = time.time()
 		# transform df to rdd
 		links = links.rdd.map(tuple)
-		links.take(5)
+		# links.take(5)
 		print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
 		# execute pagerank

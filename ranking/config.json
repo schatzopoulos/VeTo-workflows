@@ -1,6 +1,6 @@
 {
-    "indir": "/dataX/SciNeM-data/DBLP_sample/nodes/",
-    "irdir": "/dataX/SciNeM-data/DBLP_sample/relations/",
+    "indir": "/dataX/SciNeM-data/DBLP_sample2/nodes/",
+    "irdir": "/dataX/SciNeM-data/DBLP_sample2/relations/",
     "analysis_out": "./analysisout.csv",
     "final_out": "./FINAL-lala",
     "pr_alpha": 0.5,

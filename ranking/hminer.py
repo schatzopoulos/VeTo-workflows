@@ -32,7 +32,7 @@ with open(config_file) as fd:
 graph = Graph()
 
 start_time = time.time()
-graph.build(spark, metapath, nodes_dir, relations_dir)
+graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
 print("- build graph %s ---" % (time.time() - start_time))
 
 start_time = time.time()

@@ -34,4 +34,4 @@ def harmonize_schemas_and_combine(df_left, df_right):
 
 def toCSVLine(data):
 	# remove first character from id as it represents node type
-	return data[0][1:] + "\t" + str(data[1])
+	return str(data[0]) + "\t" + str(data[1])

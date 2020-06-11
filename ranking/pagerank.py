@@ -39,8 +39,9 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
 
     start_time = time.time()
     # partition rdd and cache
-    links = links.coalesce(partitions_num).cache()
-    links.take(5)
+    # links = links.coalesce(partitions_num).cache()
+    links = links.cache()
+    # links.take(5)
     print("--- links coalesce/cache %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
     # print("\n##### Ranking #####")
