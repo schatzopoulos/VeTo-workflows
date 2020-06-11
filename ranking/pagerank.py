@@ -35,30 +35,30 @@ def pagerank_score(rank, alpha, initial_pagerank):
     return alpha * rank  + (1 - alpha) * initial_pagerank
 
 def execute(links, alpha, convergence_error, partitions_num, outfile):
-    # print("Ranking\t1\tPreparing Network", flush=True)
+    print("Ranking\t1\tPreparing Network", flush=True)
 
-    start_time = time.time()
+    # start_time = time.time()
     # partition rdd and cache
     # links = links.coalesce(partitions_num).cache()
     links = links.cache()
     # links.take(5)
-    print("--- links coalesce/cache %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
+    # print("--- links coalesce/cache %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
     # print("\n##### Ranking #####")
     # total number of nodes
-    start_time = time.time()
+    # start_time = time.time()
     node_count = links.count()
-    print("--- links count %s %s---" % (time.time() - start_time, links.getNumPartitions()))
+    # print("--- links count %s %s---" % (time.time() - start_time, links.getNumPartitions()))
 
     # print("Number of nodes: %s" % (node_count))
     # print("Convergence Error: %s" % (convergence_error))
     
-    start_time = time.time()
+    # start_time = time.time()
     # initialize pagerank score
     initial_pagerank = 1 / float(node_count)
     ranks = links.map(lambda url_neighbors: (url_neighbors[0], initial_pagerank), preservesPartitioning = True)
-    ranks.take(5)
-    print("--- ranks init %s %s---" % (time.time() - start_time, ranks.getNumPartitions()))
+    # ranks.take(5)
+    # print("--- ranks init %s %s---" % (time.time() - start_time, ranks.getNumPartitions()))
 
     # initialize error in a high value
     max_error = 100
@@ -94,10 +94,10 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
 
         # calculate error between consecutive iterations
         max_error = ranks.join(prev_ranks).mapValues(lambda rank: abs(rank[0] - rank[1])).values().max()
-        print("---------Iteration: %s - max error: %s - time: %s" % (iteration, max_error, (time.time() - start_time)))
+        print("Ranking\t%s\tError: %s - time: %s" % (iteration+3, max_error, (time.time() - start_time)), flush=True)
         iteration += 1
     
-    print("Ranking\t3\tSorting Results", flush=True)
+    print("Ranking\t%s\tSorting Results" % (iteration + 3), flush=True)
     ranks.sortBy(lambda x: - x[1]).coalesce(1).map(utils.toCSVLine).saveAsTextFile(outfile)
 
     return ranks

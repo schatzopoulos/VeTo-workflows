@@ -12,18 +12,18 @@ class Graph:
 	_relations_idx = 0
 
 	def build(self, spark, metapath, nodes_dir, relations_dir, constraints):
-		# print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
+		print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
 
-		start_time = time.time()
+		# start_time = time.time()
 		vertices = self.collect_vertices(spark, metapath, nodes_dir, constraints)
 		# vertices.show(n=5)
-		print("--- read vertices %s %s---" % (time.time() - start_time, vertices.rdd.getNumPartitions()))
+		# print("--- read vertices %s %s---" % (time.time() - start_time, vertices.rdd.getNumPartitions()))
 
 		print("HIN Transformation\t2\tLoading HIN Edges", flush=True)
-		start_time = time.time()
+		# start_time = time.time()
 		edges = self.collect_edges(spark, metapath, relations_dir)
 		# edges.show(n=5)
-		print("--- read edges  %s %s ---" % (time.time() - start_time, edges.rdd.getNumPartitions()))
+		# print("--- read edges  %s %s ---" % (time.time() - start_time, edges.rdd.getNumPartitions()))
 
 		self._graph = GraphFrame(vertices, edges)
 
@@ -116,7 +116,7 @@ class Graph:
 		filters = []
 		firstEdge = ''
 		lastEdge = ''
-		# print("HIN Transformation\t3\tExecuting Motif Search", flush=True)
+		print("HIN Transformation\t3\tExecuting Motif Search", flush=True)
 
 		for i in range(len(metapath)):
 			# print(e)
@@ -160,24 +160,24 @@ class Graph:
 		# paths.show(n=5)
 		# print("--- build paths  %s %s ---" % (time.time() - start_time, paths.rdd.getNumPartitions()))
 
-		start_time = time.time()
+		# start_time = time.time()
 		# keep edges of the sub-graph based on the metapath and the constraints given 
 		self._subgraph_edges = paths.select(firstEdge + "0.src", lastEdge + str(len(metapath)-2) + ".dst")
 		# self._subgraph_edges.show(n=5)
-		print("--- build subgraph  %s %s ---" % (time.time() - start_time, self._subgraph_edges.rdd.getNumPartitions()))
+		# print("--- build subgraph  %s %s ---" % (time.time() - start_time, self._subgraph_edges.rdd.getNumPartitions()))
 
 	def pagerank(self, alpha, tol, partitions_num, outfile):
-		start_time = time.time()
+		# start_time = time.time()
 		# group edges based on src node
 		links = self._subgraph_edges.groupby("src").agg(collect_list("dst"))
 		# links.show(n=5)
-		print("--- build links %s %s ---" % (time.time() - start_time, links.rdd.getNumPartitions()))
+		# print("--- build links %s %s ---" % (time.time() - start_time, links.rdd.getNumPartitions()))
 
-		start_time = time.time()
+		# start_time = time.time()
 		# transform df to rdd
 		links = links.rdd.map(tuple)
 		# links.take(5)
-		print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
+		# print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
 		# execute pagerank
 		return pagerank.execute(links, alpha, tol, partitions_num, outfile)
