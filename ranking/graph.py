@@ -127,9 +127,10 @@ class Graph:
 				if firstEdge == '':
 					firstEdge = relation.lower()
 				lastEdge = relation.lower()
+				motif = ''
 
 				# add motif
-				motifs.append('(' + metapath[i].lower() + str(i) + ')' + '-[' + (relation).lower() + str(i)+ ']->(' + metapath[i+1].lower() + str(i+1) + ')')
+				# motifs.append('(' + metapath[i].lower() + str(i) + ')' + '-[' + (relation).lower() + str(i)+ ']->(' + metapath[i+1].lower() + str(i+1) + ')')
 				
 				# add edge filter based on edge type
 				filters.add(relation.lower() + str(i) + ".type = '" + str(self._relations_dict[relation]) + "'")
@@ -137,9 +138,19 @@ class Graph:
 				# add constraints
 				if metapath[i] in constraints:
 					filters.add(metapath[i].lower() + str(i) + "." + constraints[metapath[i]].rstrip())
+					motif = '(' + metapath[i].lower() + str(i) + ')'
+				else:
+					motif = '()'
+
+				motif += '-[' + (relation).lower() + str(i)+ ']->'
 
 				if metapath[i+1] in constraints:
 					filters.add(metapath[i+1].lower() + str(i+1) + "." + constraints[metapath[i+1]].rstrip())
+					motif += '(' + metapath[i+1].lower() + str(i+1) + ')'
+				else:
+					motif += '()'
+
+				motifs.append(motif)
 		# concat user-defined filters
 		# filters = filters + constraints
 
@@ -148,16 +159,18 @@ class Graph:
 		# self._graph.vertices.show(n=50)
 
 		# prepare motif query
+		# start_time = time.time()
 		motif_query = ';'.join(motifs)
 		paths = self._graph.find(motif_query)
 		
-		start_time = time.time()
+		# start_time = time.time()
 		# add filters
 		for f in filters:
 			paths = paths.filter(f)
 
 		# paths = paths.coalesce(partitions_num)
 		# paths.show(n=5)
+		# print(paths.count())
 		# print("--- build paths  %s %s ---" % (time.time() - start_time, paths.rdd.getNumPartitions()))
 
 		# start_time = time.time()
