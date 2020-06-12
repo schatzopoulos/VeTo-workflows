@@ -113,7 +113,7 @@ class Graph:
 	def transform(self, spark, metapath, constraints, partitions_num):
 
 		motifs = []
-		filters = []
+		filters = set()
 		firstEdge = ''
 		lastEdge = ''
 		print("HIN Transformation\t3\tExecuting Motif Search", flush=True)
@@ -132,14 +132,14 @@ class Graph:
 				motifs.append('(' + metapath[i].lower() + str(i) + ')' + '-[' + (relation).lower() + str(i)+ ']->(' + metapath[i+1].lower() + str(i+1) + ')')
 				
 				# add edge filter based on edge type
-				filters.append(relation.lower() + str(i) + ".type = '" + str(self._relations_dict[relation]) + "'")
+				filters.add(relation.lower() + str(i) + ".type = '" + str(self._relations_dict[relation]) + "'")
 
 				# add constraints
 				if metapath[i] in constraints:
-					filters.append(metapath[i].lower() + str(i) + "." + constraints[metapath[i]].rstrip())
+					filters.add(metapath[i].lower() + str(i) + "." + constraints[metapath[i]].rstrip())
 
 				if metapath[i+1] in constraints:
-					filters.append(metapath[i+1].lower() + str(i+1) + "." + constraints[metapath[i+1]].rstrip())
+					filters.add(metapath[i+1].lower() + str(i+1) + "." + constraints[metapath[i+1]].rstrip())
 		# concat user-defined filters
 		# filters = filters + constraints
 
