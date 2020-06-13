@@ -37,7 +37,10 @@ class SparseMatrix:
 
 	def non_zero(self):
 		return self._matrix.count()
-		
+	
+	def write(self, filename):
+		self._matrix.coalesce(1).write.csv(filename, sep='\t')
+
 	def multiply(self, spark, B, enable_broadcast=False):
 
 		self._matrix.createOrReplaceTempView("A")

@@ -9,7 +9,6 @@
     "query": {
         "metapath": "APVPA",
         "constraints": {
-                "V": "name = 'very large data bases'"
         }
     }
 }

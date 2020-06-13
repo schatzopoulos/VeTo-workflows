@@ -37,7 +37,9 @@ graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
 
 # start_time = time.time()
 result = graph.transform(spark)
-print(result.non_zero())
+result.write('mycsv.csv')
+
+# print(result.non_zero())
 # print("- transform %s ---" % (time.time() - start_time))
 
 # start_time = time.time()
