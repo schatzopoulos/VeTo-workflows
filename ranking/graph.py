@@ -127,7 +127,8 @@ class Graph:
 	def pagerank(self, graph, alpha, tol, partitions_num, outfile):
 
 		# aggregate dest nodes based on source and sum number of outgoing edges
-		grouped_df = graph.groupby("row").agg(struct(collect_list(struct("col", "val")).alias("edges"), sum("val").alias("edges_num")))
+		# grouped_df = graph.groupby("row").agg(struct(collect_list(struct("col", "val")).alias("edges"), sum("val").alias("edges_num")))
+		grouped_df = graph.groupby("row").agg(struct(collect_list("col").alias("cols"), collect_list("val").alias("vals"), sum("val").alias("edges_num")))
 
 		# transform to rdd that is needed for PR
 		links = grouped_df.rdd.map(tuple).cache()

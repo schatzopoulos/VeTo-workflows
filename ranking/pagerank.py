@@ -26,8 +26,13 @@ import utils
 
 def compute_contribs(outgoing_edges, rank):
     """Calculates contributions based on the number of edges between the two nodes."""
-    for edge in outgoing_edges["edges"]:
-        yield (edge['col'], rank * edge['val'] / outgoing_edges["edges_num"])
+
+    # total_weight = sum(edge['val'] for edge in outgoing_edges["edges"])
+
+    # for edge in outgoing_edges["edges"]:
+    #     yield (edge['col'], rank * edge['val'] / outgoing_edges["edges_num"])
+    for i in range(len(outgoing_edges["cols"])):
+        yield (outgoing_edges["cols"][i], rank * outgoing_edges["vals"][i] / outgoing_edges["edges_num"])
 
 def pagerank_score(rank, alpha, initial_pagerank):
     return alpha * rank  + (1 - alpha) * initial_pagerank
