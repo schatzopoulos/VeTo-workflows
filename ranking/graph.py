@@ -1,6 +1,5 @@
-from pyspark.sql.functions import concat, col, lit, struct, sum, udf
+from pyspark.sql.functions import concat, col, lit, struct, sum, collect_list
 from graphframes import GraphFrame
-from pyspark.sql.functions import UserDefinedFunction, collect_list, collect_set
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, LongType
 from functools import reduce 
 import utils
@@ -127,31 +126,12 @@ class Graph:
 
 	def pagerank(self, graph, alpha, tol, partitions_num, outfile):
 
-		grouped_df = graph.groupby("row") \
-		.agg(collect_list(struct("col", "val")) \
-		.alias("value"))
+		# aggregate dest nodes based on source and sum number of outgoing edges
+		grouped_df = graph.groupby("row").agg(struct(collect_list(struct("col", "val")).alias("edges"), sum("val").alias("edges_num")))
 
-		# define udf
-		def expand(l):
-			values = []
-			for item in l: 
-				values += [item['col']]*item['val']
-			return values
+		# transform to rdd that is needed for PR
+		links = grouped_df.rdd.map(tuple).cache()
 
-		expand_udf = udf(expand, ArrayType(IntegerType()))
-
-		grouped_df = grouped_df.select("row", expand_udf("value"))
-		# print(grouped_df.schema)
-		links = grouped_df.rdd.map(tuple)
-		# print(links.take(1))
-		# print(links.take(5))
-		# ranks = graph.select("row", col("val") * initial_pagerank)
-		# ranks = ranks.
-
-		# print(links.take(5))
-		# print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
-
-		# execute pagerank
 		return pagerank.execute(links, alpha, tol, partitions_num, outfile)
 
 

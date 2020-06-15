@@ -24,12 +24,10 @@ from operator import add
 from pyspark.sql import SparkSession
 import utils
 
-def compute_contribs(urls, rank):
-    """Calculates URL contributions to the rank of other URLs."""
-    num_urls = len(urls)
-    
-    for url in urls:
-        yield (url, rank / num_urls)
+def compute_contribs(outgoing_edges, rank):
+    """Calculates contributions based on the number of edges between the two nodes."""
+    for edge in outgoing_edges["edges"]:
+        yield (edge['col'], rank * edge['val'] / outgoing_edges["edges_num"])
 
 def pagerank_score(rank, alpha, initial_pagerank):
     return alpha * rank  + (1 - alpha) * initial_pagerank
@@ -37,31 +35,26 @@ def pagerank_score(rank, alpha, initial_pagerank):
 def execute(links, alpha, convergence_error, partitions_num, outfile):
     print("Ranking\t1\tPreparing Network", flush=True)
 
-    # start_time = time.time()
-    # partition rdd and cache
-    # links = links.coalesce(partitions_num).cache()
-    links = links.cache()
-    # links.take(5)
-    # print("--- links coalesce/cache %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
-
-    # print("\n##### Ranking #####")
+    # sum all weights
+    # total_weights = links.map(lambda x: (1, sum(record['val'] for record in x[1]))) \
+    # .reduceByKey(lambda x,y: x + y).collect()[0][1]
     # total number of nodes
-    # start_time = time.time()
     node_count = links.count()
     # print("--- links count %s %s---" % (time.time() - start_time, links.getNumPartitions()))
 
     # print("Number of nodes: %s" % (node_count))
     # print("Convergence Error: %s" % (convergence_error))
-    
     # start_time = time.time()
     # initialize pagerank score
     initial_pagerank = 1 / float(node_count)
     ranks = links.map(lambda url_neighbors: (url_neighbors[0], initial_pagerank), preservesPartitioning = True)
-    # ranks.take(5)
+
+    # print(ranks.take(5))
     # print("--- ranks init %s %s---" % (time.time() - start_time, ranks.getNumPartitions()))
 
     # find dangling nodes
     dangling_nodes = links.filter(lambda link: not link[1]).cache()
+
     # initialize error in a high value
     max_error = 100
     
@@ -82,9 +75,9 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
 
         # add dangling sum to all nodes
         dangling_contribs = links.mapValues(lambda x: dangling_sum)
-
+       
         contribs = links.join(ranks, numPartitions = links.getNumPartitions()).flatMap(
-            lambda url_urls_rank: compute_contribs(url_urls_rank[1][0], url_urls_rank[1][1]))
+            lambda outgoing_edges: compute_contribs(outgoing_edges[1][0], outgoing_edges[1][1]))
         
         contribs = contribs.union(dangling_contribs).coalesce(links.getNumPartitions())
 
