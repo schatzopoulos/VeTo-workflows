@@ -1,7 +1,7 @@
 {
     "indir": "/dataX/SciNeM-data/DBLP_sample/nodes/",
     "irdir": "/dataX/SciNeM-data/DBLP_sample/relations/",
-    "analysis_out": "./analysisout.csv",
+    "analysis_out": "./matrix-mult",
     "final_out": "./FINAL-lala",
     "pr_alpha": 0.5,
     "pr_tol": 0.00000000001,
@@ -9,6 +9,7 @@
     "query": {
         "metapath": "APVPA",
         "constraints": {
+            "V": "name = 'very large data bases'"
         }
     }
 }

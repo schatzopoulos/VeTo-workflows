@@ -36,13 +36,13 @@ graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
 # print("- build graph %s ---" % (time.time() - start_time))
 
 # start_time = time.time()
-result = graph.transform(spark)
-result.write('mycsv.csv')
+hgraph = graph.transform(spark)
+# result.write('mycsv.csv')
 
 # print(result.non_zero())
 # print("- transform %s ---" % (time.time() - start_time))
 
 # start_time = time.time()
-#results = graph.pagerank(alpha, tol, partitions_num, outfile)
+results = graph.pagerank(hgraph, alpha, tol, partitions_num, outfile)
 # print("- pagerank %s ---" % (time.time() - start_time))
 

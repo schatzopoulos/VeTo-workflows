@@ -1,13 +1,16 @@
-from pyspark.sql.functions import concat, col, lit
+from pyspark.sql.functions import concat, col, lit, struct, sum, udf
 from graphframes import GraphFrame
-from pyspark.sql.functions import UserDefinedFunction, collect_list
-from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+from pyspark.sql.functions import UserDefinedFunction, collect_list, collect_set
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType, ArrayType, LongType
 from functools import reduce 
 import utils
 import pagerank
 import time
 from SparseMatrix import SparseMatrix
 from DynamicOptimizer import DynamicOptimizer
+from array import array
+import operator
+
 
 class Graph:
 
@@ -66,7 +69,7 @@ class Graph:
 		# print("##### Relations #####")
 		for i in range(len(metapath)-1):
 			relation = metapath[i:i+2]
-			print(relation)
+			# print(relation)
 
 			# read from csv file using a specific schema
 			schema = StructType([
@@ -92,13 +95,12 @@ class Graph:
 
 		chain_order = []
 		optimizer.get_optimal_chain_order(0, len(self._dimensions) - 2, chain_order);
-		print(chain_order)
+		# print(chain_order)
 
 		temp = []
 		tmp_ptr = None
 
 		for (k, l) in chain_order:
-			print(str(k) + "\t" + str(l))
 
 			n = len(temp)
 
@@ -121,19 +123,32 @@ class Graph:
 				temp.pop()
 
 
-		return temp[0]
+		return temp[0].get_df()
 
-	def pagerank(self, alpha, tol, partitions_num, outfile):
-		# start_time = time.time()
-		# group edges based on src node
-		links = self._subgraph_edges.groupby("src").agg(collect_list("dst"))
-		# links.show(n=5)
-		# print("--- build links %s %s ---" % (time.time() - start_time, links.rdd.getNumPartitions()))
+	def pagerank(self, graph, alpha, tol, partitions_num, outfile):
 
-		# start_time = time.time()
-		# transform df to rdd
-		links = links.rdd.map(tuple)
-		# links.take(5)
+		grouped_df = graph.groupby("row") \
+		.agg(collect_list(struct("col", "val")) \
+		.alias("value"))
+
+		# define udf
+		def expand(l):
+			values = []
+			for item in l: 
+				values += [item['col']]*item['val']
+			return values
+
+		expand_udf = udf(expand, ArrayType(IntegerType()))
+
+		grouped_df = grouped_df.select("row", expand_udf("value"))
+		# print(grouped_df.schema)
+		links = grouped_df.rdd.map(tuple)
+		# print(links.take(1))
+		# print(links.take(5))
+		# ranks = graph.select("row", col("val") * initial_pagerank)
+		# ranks = ranks.
+
+		# print(links.take(5))
 		# print("--- build rdd  %s %s ---" % (time.time() - start_time, links.getNumPartitions()))
 
 		# execute pagerank

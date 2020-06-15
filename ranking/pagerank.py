@@ -60,6 +60,8 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
     # ranks.take(5)
     # print("--- ranks init %s %s---" % (time.time() - start_time, ranks.getNumPartitions()))
 
+    # find dangling nodes
+    dangling_nodes = links.filter(lambda link: not link[1]).cache()
     # initialize error in a high value
     max_error = 100
     
@@ -73,9 +75,6 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
         start_time = time.time()
 
         prev_ranks = ranks
-
-        # find dangling nodes
-        dangling_nodes = links.filter(lambda link: not link[1])
 
         # calculate dangling sum
         dangling_sum = dangling_nodes.join(ranks).map(lambda x: x[1][1]).sum()
