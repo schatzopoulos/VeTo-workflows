@@ -4,7 +4,6 @@ import sys
 import json
 from Graph import Graph
 import time
-import subprocess
 
 if len(sys.argv) != 2:
 	print("Usage: spark-submit --packages graphframes:graphframes:0.8.0-spark3.0-s_2.12 hminer.py config.json", file=sys.stderr)
@@ -22,6 +21,7 @@ with open(config_file) as fd:
 		config = json.load(fd)
 		nodes_dir = config["indir"]
 		relations_dir = config["irdir"]
+		operation = config["operation"]
 		alpha = float(config["pr_alpha"]) if ("pr_alpha" in config) else None
 		tol = float(config["pr_tol"]) if ("pr_tol" in config) else None
 		hin_out = config["hin_out"]
@@ -39,16 +39,7 @@ graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
 hgraph = graph.transform(spark)
 
 # when PR params are not given, execute only HIN transformation
-if alpha is None and tol is None:
-	hgraph.write(hin_out)
-	bashCommand = "cd ../spark-distributed-louvain-modularity/dga-graphx/"
-	process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-	output, error = process.communicate()
-	print(output)
-	print(error)
-	bashCommand = "touch edw"
-	process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-	output, error = process.communicate()
-else:
+if operation == "ranking":
 	results = graph.pagerank(hgraph, alpha, tol, analysis_out)
-
+else:
+	hgraph.write(hin_out)

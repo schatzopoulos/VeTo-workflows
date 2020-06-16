@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname "$0")"
 
 config="$1"
 
@@ -6,8 +7,6 @@ if ! spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --py-
         echo "Error: Ranking"
         exit 1
 fi
-
-cd "$(dirname "$0")"
 
 if ! python3 ../add_names.py -c "$config"; then 
         echo "Error: Finding node names"

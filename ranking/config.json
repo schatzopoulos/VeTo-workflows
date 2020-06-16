@@ -6,6 +6,7 @@
     "hin_out": "/opt/SciNeM-workflows/ranking/hin_out",
     "pr_tol": 0.000001,
     "pr_alpha": 0.5,
+    "operation": "ranking",
     "select_field": "name",
     "query": {
         "metapath": "APA",

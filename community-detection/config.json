@@ -1,0 +1,15 @@
+{
+    "indir": "/dataX/SciNeM-data/DBLP_sample/nodes/",
+    "irdir": "/dataX/SciNeM-data/DBLP_sample/relations/",
+    "analysis_out": "/opt/SciNeM-workflows/community-detection/analysis_out",
+    "final_out": "/opt/SciNeM-workflows/community-detection/final_out",
+    "hin_out": "/opt/SciNeM-workflows/community-detection/hin_out",
+    "operation": "community_detection",
+    "select_field": "name",
+    "query": {
+        "metapath": "APA",
+        "constraints": {
+            "V": "name = 'very large data bases' or name='parallel computing'"
+        }
+    }
+}
