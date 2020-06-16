@@ -124,7 +124,7 @@ class Graph:
 
 		return temp[0].get_df()
 
-	def pagerank(self, graph, alpha, tol, partitions_num, outfile):
+	def pagerank(self, graph, alpha, tol, outfile):
 		print("HIN Transformation\t3\tPreparing Network", flush=True)
 
 		# aggregate dest nodes based on source and sum number of outgoing edges
@@ -133,7 +133,7 @@ class Graph:
 		# transform to rdd that is needed for PR
 		links = grouped_df.rdd.map(tuple).cache()
 
-		return pagerank.execute(links, alpha, tol, partitions_num, outfile)
+		return pagerank.execute(links, alpha, tol, outfile)
 
 
 

@@ -42,6 +42,6 @@ hgraph = graph.transform(spark)
 # print("- transform %s ---" % (time.time() - start_time))
 
 # start_time = time.time()
-results = graph.pagerank(hgraph, alpha, tol, partitions_num, outfile)
+results = graph.pagerank(hgraph, alpha, tol, outfile)
 # print("- pagerank %s ---" % (time.time() - start_time))
 
