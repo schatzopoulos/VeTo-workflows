@@ -87,6 +87,7 @@ class Graph:
 		return transition_matrices
 
 	def transform(self, spark):
+		print("HIN Transformation\t3\tPreparing Network", flush=True)
 
 		optimizer = DynamicOptimizer()
 		optimizer.sparse_optimimal_chain_order(self._dimensions, self._transition_matrices)
@@ -124,7 +125,6 @@ class Graph:
 		return temp[0]
 
 	def pagerank(self, graph, alpha, tol, outfile):
-		print("HIN Transformation\t3\tPreparing Network", flush=True)
 
 		# aggregate dest nodes based on source and sum number of outgoing edges
 		grouped_df = graph.get_df().groupby("row").agg(struct(collect_list("col").alias("cols"), collect_list("val").alias("vals"), sum("val").alias("edges_num")))
