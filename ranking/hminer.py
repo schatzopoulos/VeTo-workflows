@@ -23,7 +23,6 @@ with open(config_file) as fd:
 		relations_dir = config["irdir"]
 		alpha = float(config["pr_alpha"])
 		tol = float(config["pr_tol"])
-		partitions_num = int(config["partitions"])	# number of executors * number of cores per executor
 		outfile = config["analysis_out"]
 		metapath = config["query"]["metapath"]
 		constraints = config["query"]["constraints"]

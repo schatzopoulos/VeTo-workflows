@@ -37,7 +37,7 @@ def compute_contribs(outgoing_edges, rank):
 def pagerank_score(rank, alpha, initial_pagerank):
     return alpha * rank  + (1 - alpha) * initial_pagerank
 
-def execute(links, alpha, convergence_error, partitions_num, outfile):
+def execute(links, alpha, convergence_error, outfile):
     print("Ranking\t1\tInitializing Ranking Algorithm", flush=True)
 
     # sum all weights
