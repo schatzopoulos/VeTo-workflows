@@ -58,7 +58,7 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
     # print("--- ranks init %s %s---" % (time.time() - start_time, ranks.getNumPartitions()))
 
     # find dangling nodes
-    dangling_nodes = links.filter(lambda link: not link[1]).cache()
+    # dangling_nodes = links.filter(lambda link: not link[1]).cache()
 
     # initialize error in a high value
     max_error = 100
@@ -75,16 +75,16 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
         prev_ranks = ranks
 
         # calculate dangling sum
-        dangling_sum = dangling_nodes.join(ranks).map(lambda x: x[1][1]).sum()
-        dangling_sum /= node_count
+        # dangling_sum = dangling_nodes.join(ranks).map(lambda x: x[1][1]).sum()
+        # dangling_sum /= node_count
 
         # add dangling sum to all nodes
-        dangling_contribs = links.mapValues(lambda x: dangling_sum)
+        # dangling_contribs = links.mapValues(lambda x: dangling_sum)
        
         contribs = links.join(ranks, numPartitions = links.getNumPartitions()).flatMap(
             lambda outgoing_edges: compute_contribs(outgoing_edges[1][0], outgoing_edges[1][1]))
         
-        contribs = contribs.union(dangling_contribs).coalesce(links.getNumPartitions())
+        # contribs = contribs.union(dangling_contribs).coalesce(links.getNumPartitions())
 
         # re-calculate pagerank score from neighbor contributions
         ranks = contribs.reduceByKey(add, numPartitions = links.getNumPartitions()).mapValues(lambda rank: pagerank_score(rank, alpha, initial_pagerank))
