@@ -11,12 +11,14 @@ fi
 # find hin folder from json config 
 hin=`cat "$config" | jq -r .hin_out`
 out=`cat "$config" | jq -r .analysis_out`
+current_dir=`pwd`
 
 # call community detection algorithm
 cd ./dga-graphx/
 bash ./bin/louvain -i "$hin/part-00000*" -o "$out"
+cd $current_dir
 
-# if ! python3 ../add_names.py -c "$config"; then 
-#         echo "Error: Finding node names"
-#         exit 3
-# fi
+if ! python3 ../add_names.py -c "$config"; then 
+        echo "Error: Finding node names"
+        exit 3
+fi

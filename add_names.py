@@ -8,9 +8,18 @@ with open(sys.argv[2]) as config_file:
     metapath = config["query"]["metapath"]
     nodes_dir = config["indir"]
     outfile = config["final_out"] 
-    input_pr = config["analysis_out"] + "/part-00000" if os.path.isdir(config["analysis_out"]) else config["analysis_out"]
     select_field = config["select_field"]
     first_entity = metapath[:1]
+    operation = config["operation"]
+
+    input_pr = config["analysis_out"]
+
+    # change intermediate file according to analysis type
+    if os.path.isdir(config["analysis_out"]): 
+        if operation == "community_detection":
+            input_pr = config["analysis_out"] + "/level_0_vertices/part-00000" 
+        else:
+            input_pr = config["analysis_out"] + "/part-00000" 
 
 entity_file = nodes_dir + first_entity + ".csv"
 
@@ -49,15 +58,19 @@ with open(outfile, 'w', newline='') as csvfile:
             parts = line.split("\t")
 
             row_data = []
+
+            # convert only first column for community detection output
+            cols = 1 if operation == "community_detection" else len(parts)-1
+
             # loop in all columns except last one
-            for col in range(len(parts)-1):
+            for col in range(cols):
                 # print(parts[col])
                 value = 'Unknown'
                 if parts[col] in names:
-                    value = names[parts[col]]
+                    parts[col] = parts[col] + "|" + names[parts[col]]
 
-                row_data.append(parts[col] + "|" + value)
+                # row_data.append(parts[col] + "|" + value)
 
             # append last column that is the score of the analysis
-            row_data.append(parts[len(parts)-1])
-            filewriter.writerow(row_data)
+            # row_data.append(parts[len(parts)-1])
+            filewriter.writerow(parts)
