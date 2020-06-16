@@ -38,7 +38,7 @@ def pagerank_score(rank, alpha, initial_pagerank):
     return alpha * rank  + (1 - alpha) * initial_pagerank
 
 def execute(links, alpha, convergence_error, partitions_num, outfile):
-    print("Ranking\t1\tPreparing Network", flush=True)
+    print("Ranking\t1\tInitializing Ranking Algorithm", flush=True)
 
     # sum all weights
     # total_weights = links.map(lambda x: (1, sum(record['val'] for record in x[1]))) \
@@ -91,10 +91,10 @@ def execute(links, alpha, convergence_error, partitions_num, outfile):
 
         # calculate error between consecutive iterations
         max_error = ranks.join(prev_ranks).mapValues(lambda rank: abs(rank[0] - rank[1])).values().max()
-        print("Ranking\t%s\tError: %s - time: %s" % (iteration+3, max_error, (time.time() - start_time)), flush=True)
+        print("Ranking\t3\tExecuting Ranking Algorithm (iteration %s)" % (iteration+1), flush=True)
         iteration += 1
     
-    print("Ranking\t%s\tSorting Results" % (iteration + 3), flush=True)
+    print("Ranking\t4\tSorting Ranking List", flush=True)
     ranks.sortBy(lambda x: - x[1]).coalesce(1).map(utils.toCSVLine).saveAsTextFile(outfile)
 
     return ranks
