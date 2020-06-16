@@ -1,15 +1,16 @@
 {
     "indir": "/dataX/SciNeM-data/DBLP_sample/nodes/",
     "irdir": "/dataX/SciNeM-data/DBLP_sample/relations/",
-    "analysis_out": "./matrix-mult",
-    "final_out": "./FINAL-lala",
+    "analysis_out": "/opt/SciNeM-workflows/ranking/analysis_out",
+    "final_out": "/opt/SciNeM-workflows/ranking/final_out",
+    "hin_out": "/opt/SciNeM-workflows/ranking/hin_out",
+    "pr_tol": 0.000001,
     "pr_alpha": 0.5,
-    "pr_tol": 0.00000000001,
-    "partitions": 1,
+    "select_field": "name",
     "query": {
-        "metapath": "APVPA",
+        "metapath": "APA",
         "constraints": {
-            "V": "name = 'very large data bases'"
+            "V": "name = 'very large data bases' or name='parallel computing'"
         }
     }
 }
