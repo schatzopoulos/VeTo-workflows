@@ -1,2 +1,2 @@
-/opt/SciNeM-workflows/spark-distributed-louvain-modularity/dga-graphx/build/libs/dga-graphx-0.1.jar
-/opt/SciNeM-workflows/spark-distributed-louvain-modularity/dga-graphx/build/tmp/scala/compilerAnalysis/compileScala.analysis
+/opt/SciNeM-workflows/community-detection/dga-graphx/build/libs/dga-graphx-0.1.jar
+/opt/SciNeM-workflows/community-detection/dga-graphx/build/tmp/scala/compilerAnalysis/compileScala.analysis
