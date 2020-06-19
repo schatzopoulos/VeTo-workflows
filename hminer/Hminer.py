@@ -6,7 +6,7 @@ from Graph import Graph
 import time
 
 if len(sys.argv) != 2:
-	print("Usage: spark-submit --packages graphframes:graphframes:0.8.0-spark3.0-s_2.12 hminer.py config.json", file=sys.stderr)
+	print("Usage: spark-submit hminer.py config.json", file=sys.stderr)
 	sys.exit(-1)
 
 spark = SparkSession.builder.appName('HMiner').getOrCreate()
@@ -25,7 +25,7 @@ with open(config_file) as fd:
 		alpha = float(config["pr_alpha"]) if ("pr_alpha" in config) else None
 		tol = float(config["pr_tol"]) if ("pr_tol" in config) else None
 		hin_out = config["hin_out"]
-		analysis_out = config["analysis_out"]
+		ranking_out = config["ranking_out"]
 		metapath = config["query"]["metapath"]
 		constraints = config["query"]["constraints"]
 
@@ -38,8 +38,10 @@ graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
 # transform HIN to homogeneous network
 hgraph = graph.transform(spark)
 
-# when PR params are not given, execute only HIN transformation
-if operation == "ranking":
-	results = graph.pagerank(hgraph, alpha, tol, analysis_out)
-else:
+# when operation includes "ranking"
+if operation.find("ranking") != -1:
+	results = graph.pagerank(hgraph, alpha, tol, ranking_out)
+
+# when operation is (not only) "ranking", it can be "ranking-community" or "community"
+if operation != "ranking":
 	hgraph.write(hin_out)
