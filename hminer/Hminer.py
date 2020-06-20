@@ -26,6 +26,7 @@ with open(config_file) as fd:
 		tol = float(config["pr_tol"]) if ("pr_tol" in config) else None
 		hin_out = config["hin_out"]
 		ranking_out = config["ranking_out"]
+		communities_out = config["communities_out"]
 		metapath = config["query"]["metapath"]
 		constraints = config["query"]["constraints"]
 
@@ -40,8 +41,9 @@ hgraph = graph.transform(spark)
 
 # when operation includes "ranking"
 if operation.find("ranking") != -1:
-	results = graph.pagerank(hgraph, alpha, tol, ranking_out)
+	graph.pagerank(hgraph, alpha, tol, ranking_out)
 
 # when operation is (not only) "ranking", it can be "ranking-community" or "community"
 if operation != "ranking":
-	hgraph.write(hin_out)
+	# hgraph.write(hin_out)
+	graph.lpa(hgraph, communities_out)

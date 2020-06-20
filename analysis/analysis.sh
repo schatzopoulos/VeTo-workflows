@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 config="$1"
 
 # performs HIN transformation and ranking (if needed)
-if ! spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"; then
+if ! spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --packages graphframes:graphframes:0.8.0-spark3.0-s_2.12 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"; then
        echo "Error: HIN Transformation"
        exit 1
 fi
@@ -18,17 +18,19 @@ if [[ $operation == *"community"* ]]; then
 	out=`cat "$config" | jq -r .communities_out`
 	current_dir=`pwd`
 
+	cat $out/*.csv > $out/part-00000
+
 	# call community detection algorithm
-	cd ../louvain/
+	# cd ../louvain/
 
-	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-*" -o "$out" 2>/dev/null; then
-		echo "Error: Community Detection"
-		exit 2
-	fi
+	# if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-*" -o "$out" 2>/dev/null; then
+	# 	echo "Error: Community Detection"
+	# 	exit 2
+	# fi
 
-	cd $current_dir
+	# cd $current_dir
 fi
-
+	
 # merges available results and appends entity names
 if ! python3 ../add_names.py -c "$config"; then 
          echo "Error: Finding node names"
