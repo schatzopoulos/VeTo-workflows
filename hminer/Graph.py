@@ -8,7 +8,7 @@ from SparseMatrix import SparseMatrix
 from DynamicOptimizer import DynamicOptimizer
 from array import array
 import operator
-from graphframes import GraphFrame
+# from graphframes import GraphFrame
 
 
 class Graph:
@@ -135,10 +135,10 @@ class Graph:
 
 		return Pagerank.execute(links, alpha, tol, outfile)
 
-	def lpa(self, graph, outfile):
-		edges = graph.get_df().select(col('row').alias('src'), col('col').alias('dst'))
-		vertices = edges.select('src').union(edges.select('dst')).distinct().withColumnRenamed('src', 'id')
+	# def lpa(self, graph, outfile):
+	# 	edges = graph.get_df().select(col('row').alias('src'), col('col').alias('dst'))
+	# 	vertices = edges.select('src').union(edges.select('dst')).distinct().withColumnRenamed('src', 'id')
 
-		graph = GraphFrame(vertices, edges)
-		result = graph.labelPropagation(maxIter=5)
-		result.orderBy('label', ascending=True).withColumnRenamed('label', 'Community').write.csv(outfile, sep='\t')
+	# 	graph = GraphFrame(vertices, edges)
+	# 	result = graph.labelPropagation(maxIter=5)
+	# 	result.orderBy('label', ascending=True).withColumnRenamed('label', 'Community').write.csv(outfile, sep='\t')

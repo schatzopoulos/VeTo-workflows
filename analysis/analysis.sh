@@ -18,7 +18,7 @@ if [[ $operation == *"community"* ]]; then
 	out=`cat "$config" | jq -r .communities_out`
 	current_dir=`pwd`
 
-	cat $out/*.csv > $out/part-00000
+	# cat $out/*.csv > $out/part-00000
 
 	# call community detection algorithm
 	cd ../louvain/
