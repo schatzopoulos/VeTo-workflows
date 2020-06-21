@@ -45,5 +45,5 @@ if operation.find("ranking") != -1:
 
 # when operation is (not only) "ranking", it can be "ranking-community" or "community"
 if operation != "ranking":
-	# hgraph.write(hin_out)
-	graph.lpa(hgraph, communities_out)
+	hgraph.write(hin_out)
+	# graph.lpa(hgraph, communities_out)
