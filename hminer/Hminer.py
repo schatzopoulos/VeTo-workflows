@@ -45,6 +45,10 @@ if "Ranking" in analyses or "Community Detection" in analyses:
 
 	if "Community Detection" in analyses:
 		hgraph.write(hin_out)
+		df = hgraph.get_df().agg(avg(col("val")))
+
+		df.show(n=5)
+
 		# graph.lpa(hgraph, communities_out)
 
 	printLogs = False
@@ -54,5 +58,7 @@ if "Similarity Join" in analyses or "Similarity Search" in analyses:
 	graph = Graph()
 	graph.build(spark, joinpath, nodes_dir, relations_dir, constraints, printLogs)
 	hgraph = graph.transform(spark, printLogs)
+	
+	hgraph.sort()	# similarity join & search code assumes sorted input graph
 
 	hgraph.write(join_hin_out)

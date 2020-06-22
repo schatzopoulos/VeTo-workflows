@@ -22,33 +22,7 @@ if [[ " ${analyses[@]} " =~ "Ranking" ]]; then
 	fi
 fi
 
-# perform Community Detection
-if [[ " ${analyses[@]} " =~ "Community Detection" ]]; then
 
-	# find hin folder from json config 
-	hin=`cat "$config" | jq -r .hin_out`
-	communities_out=`cat "$config" | jq -r .communities_out`
-	final_communities_out=`cat "$config" | jq -r .final_communities_out`
-
-	current_dir=`pwd`
-
-	# cat $out/*.csv > $out/part-00000
-
-	# call community detection algorithm
-	cd ../louvain/
-
-	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-*" -o "$communities_out" 2>/dev/null; then
-		echo "Error: Community Detection"
-		exit 3
-	fi
-
-	cd $current_dir
-
-	if ! python3 ../add_names.py -c "$config" "Community Detection" "$communities_out" "$final_communities_out"; then 
-         echo "Error: Finding node names in Community Detection output"
-         exit 2
-	fi
-fi
 
 if [[ " ${analyses[@]} " =~ "Similarity Join" ]]; then
 
@@ -82,3 +56,30 @@ if [[ " ${analyses[@]} " =~ "Similarity Search" ]]; then
 	fi
 fi
 	
+# perform Community Detection
+if [[ " ${analyses[@]} " =~ "Community Detection" ]]; then
+
+	# find hin folder from json config 
+	hin=`cat "$config" | jq -r .hin_out`
+	communities_out=`cat "$config" | jq -r .communities_out`
+	final_communities_out=`cat "$config" | jq -r .final_communities_out`
+
+	current_dir=`pwd`
+
+	# cat $out/*.csv > $out/part-00000
+
+	# call community detection algorithm
+	cd ../louvain/
+
+	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-*" -o "$communities_out" 2>/dev/null; then
+		echo "Error: Community Detection"
+		exit 3
+	fi
+
+	cd $current_dir
+
+	if ! python3 ../add_names.py -c "$config" "Community Detection" "$communities_out" "$final_communities_out"; then 
+         echo "Error: Finding node names in Community Detection output"
+         exit 2
+	fi
+fi

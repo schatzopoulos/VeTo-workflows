@@ -1,6 +1,6 @@
 from pyspark.serializers import PickleSerializer, AutoBatchedSerializer
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import broadcast
+from pyspark.sql.functions import broadcast, col
 from pyspark.sql.types import StructType, StructField, LongType, DoubleType
 
 import argparse
@@ -40,6 +40,9 @@ class SparseMatrix:
 	
 	def write(self, filename):
 		self._matrix.coalesce(1).write.csv(filename, sep='\t')
+	
+	def sort(self):
+		self._matrix = self._matrix.sort(col("row"))
 
 	def multiply(self, spark, B, enable_broadcast=False):
 
