@@ -45,10 +45,6 @@ if "Ranking" in analyses or "Community Detection" in analyses:
 
 	if "Community Detection" in analyses:
 		hgraph.write(hin_out)
-		df = hgraph.get_df().agg(avg(col("val")))
-
-		df.show(n=5)
-
 		# graph.lpa(hgraph, communities_out)
 
 	printLogs = False
