@@ -126,7 +126,7 @@ class Graph:
 
 			else:
 
-				temp[n-2] = temp[n-2].multiply(spark, temp[n-1])
+				temp[n-2] = temp[n-2].multiply(spark, temp[n-1], )
 				temp.pop()
 
 

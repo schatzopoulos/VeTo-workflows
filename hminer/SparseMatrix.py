@@ -44,6 +44,9 @@ class SparseMatrix:
 	def sort(self):
 		self._matrix = self._matrix.sort(col("row"))
 
+	def filter(self, condition):
+		self._matrix = self._matrix.filter(condition)
+
 	def multiply(self, spark, B, enable_broadcast=False):
 
 		self._matrix.createOrReplaceTempView("A")
