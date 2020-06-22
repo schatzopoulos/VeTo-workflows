@@ -21,29 +21,38 @@ with open(config_file) as fd:
 		config = json.load(fd)
 		nodes_dir = config["indir"]
 		relations_dir = config["irdir"]
-		operation = config["operation"]
+		analyses = config["analyses"]
 		alpha = float(config["pr_alpha"]) if ("pr_alpha" in config) else None
 		tol = float(config["pr_tol"]) if ("pr_tol" in config) else None
 		hin_out = config["hin_out"]
+		join_hin_out = config["join_hin_out"]
 		ranking_out = config["ranking_out"]
 		communities_out = config["communities_out"]
 		metapath = config["query"]["metapath"]
+		joinpath = config["query"]["joinpath"]
 		constraints = config["query"]["constraints"]
 
+printLogs = True
+if "Ranking" in analyses or "Community Detection" in analyses:
+	
+	# In ranking and community detection a homegeneous graph is needed 
+	graph = Graph()
+	graph.build(spark, metapath, nodes_dir, relations_dir, constraints, printLogs)
+	hgraph = graph.transform(spark, printLogs)
 
-graph = Graph()
+	if "Ranking" in analyses:
+		graph.pagerank(hgraph, alpha, tol, ranking_out)
 
-# build HIN
-graph.build(spark, metapath, nodes_dir, relations_dir, constraints)
+	if "Community Detection" in analyses:
+		hgraph.write(hin_out)
+		# graph.lpa(hgraph, communities_out)
 
-# transform HIN to homogeneous network
-hgraph = graph.transform(spark)
+	printLogs = False
 
-# when operation includes "ranking"
-if operation.find("ranking") != -1:
-	graph.pagerank(hgraph, alpha, tol, ranking_out)
+# the graph differs in case of similarity search & join
+if "Similarity Join" in analyses or "Similarity Search" in analyses:
+	graph = Graph()
+	graph.build(spark, joinpath, nodes_dir, relations_dir, constraints, printLogs)
+	hgraph = graph.transform(spark, printLogs)
 
-# when operation is (not only) "ranking", it can be "ranking-community" or "community"
-if operation != "ranking":
-	hgraph.write(hin_out)
-	# graph.lpa(hgraph, communities_out)
+	hgraph.write(join_hin_out)

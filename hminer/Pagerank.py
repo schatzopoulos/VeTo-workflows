@@ -64,7 +64,6 @@ def execute(links, alpha, convergence_error, outfile):
     max_error = 100
     
     iteration = 0
-
     print("Ranking\t2\tExecuting Ranking Algorithm", flush=True)
 
     # Calculates and updates URL ranks continuously using PageRank algorithm.
@@ -91,10 +90,10 @@ def execute(links, alpha, convergence_error, outfile):
 
         # calculate error between consecutive iterations
         max_error = ranks.join(prev_ranks).mapValues(lambda rank: abs(rank[0] - rank[1])).values().max()
-        print("Ranking\t3\tExecuting Ranking Algorithm (iteration %s)" % (iteration+1), flush=True)
+        print("Ranking\t2\tExecuting Ranking Algorithm (iteration %s)" % (iteration+1), flush=True)
         iteration += 1
     
-    print("Ranking\t4\tSorting Ranking List", flush=True)
+    print("Ranking\t3\tSorting Ranking List", flush=True)
     ranks.sortBy(lambda x: - x[1]).coalesce(1).map(utils.toCSVLine).saveAsTextFile(outfile)
 
     return ranks

@@ -22,41 +22,40 @@ def parse_entities(entity_file, select_field):
 
     return names_df
 
-def write_output(names, cfd, rfd, fout):
+def write_output(names, analysis, fin, fout):
 
     # read community detection result
-    cdf = None
-    if os.path.isdir(cfd):
-        cdf = pd.read_csv(cfd + "/part-00000", sep='\t', header=None, names=["id", "Community"])
-        # print(cdf.head())
+    if analysis == "Ranking":
+        result = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Ranking Score"])
 
-    # read ranking result
-    rdf = None
-    if os.path.isdir(rfd):
-        rdf = pd.read_csv(rfd + "/part-00000", sep='\t', header=None, names=["id", "Ranking Score"])
-        # print(rdf.head())
+    elif analysis == "Community Detection":
+        df = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Community"])
+        result = df.sort_values(by=["Community"])
+
 
     # combine ranking and community detection results
-    if cdf is not None and rdf is not None:
-        result = cdf.merge(rdf, on="id", how='inner')
-        result.sort_values(by=["Community", "Ranking Score"], ascending=[True, False], inplace=True)
+    # if cdf is not None and rdf is not None:
+    #     result = cdf.merge(rdf, on="id", how='inner')
+    #     result.sort_values(by=["Community", "Ranking Score"], ascending=[True, False], inplace=True)
 
-    # only community detection results, sort appropriately
-    elif cdf is not None:
-        result = cdf.sort_values(by=["Community"])
-    
-    # ranking result is already sorted
-    elif rdf is not None:
-        result = rdf
     
     result = result.merge(names, on="id", how='inner')
-    result.to_csv(fout, index = False, sep='\t')
+    del result['id']
+    result.rename(columns={'name': 'Entity'}, inplace=True)
+    cols = result.columns.tolist()
+    cols = cols[-1:] + cols[:-1]        # move name first
+
+    result[cols].to_csv(fout, index = False, sep='\t')
 
 
 with open(sys.argv[2]) as config_file:
+    analysis = sys.argv[3]
+    fin = sys.argv[4]
+    fout = sys.argv[5]
     config = json.load(config_file)
     
     entity_file = config["indir"] + config["query"]["metapath"][:1] + ".csv"
 
     names = parse_entities(entity_file, config["select_field"])
-    write_output(names, config["communities_out"], config["ranking_out"], config["final_out"])
+    write_output(names, analysis, fin, fout)
+    print(analysis + "\t3\tCompleted")

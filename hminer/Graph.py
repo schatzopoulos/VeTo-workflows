@@ -16,16 +16,18 @@ class Graph:
 	_dimensions = []
 	_transition_matrices = []
 
-	def build(self, spark, metapath, nodes_dir, relations_dir, constraints):
-		print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
+	def build(self, spark, metapath, nodes_dir, relations_dir, constraints, printLogs):
+		if printLogs == True:
+			print("HIN Transformation\t1\tLoading HIN Nodes", flush=True)
 
 		# start_time = time.time()
 		constraint_ids = self.build_constraint_matrices(spark, metapath, nodes_dir, constraints)
 
 		# vertices.show(n=5)
 		# print("--- read vertices %s %s---" % (time.time() - start_time, vertices.rdd.getNumPartitions()))
+		if printLogs == True:
+			print("HIN Transformation\t2\tLoading HIN Edges", flush=True)
 
-		print("HIN Transformation\t2\tLoading HIN Edges", flush=True)
 		# start_time = time.time()
 		self._transition_matrices = self.build_transition_matrices(spark, metapath, relations_dir, constraint_ids)
 		# edges.show(n=5)
@@ -87,10 +89,15 @@ class Graph:
 
 		return transition_matrices
 
-	def transform(self, spark):
-		print("HIN Transformation\t3\tPreparing Network", flush=True)
+	def transform(self, spark, printLogs):
+		if printLogs == True:
+			print("HIN Transformation\t3\tPreparing Network", flush=True)
+		
+		if len(self._transition_matrices) == 1:
+			return self._transition_matrices[0]
 
 		optimizer = DynamicOptimizer()
+
 		optimizer.sparse_optimimal_chain_order(self._dimensions, self._transition_matrices)
 
 		chain_order = []
