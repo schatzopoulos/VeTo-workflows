@@ -22,8 +22,6 @@ if [[ " ${analyses[@]} " =~ "Ranking" ]]; then
 	fi
 fi
 
-
-
 if [[ " ${analyses[@]} " =~ "Similarity Join" ]]; then
 
 	# find hin folder from json config 
@@ -80,6 +78,15 @@ if [[ " ${analyses[@]} " =~ "Community Detection" ]]; then
 
 	if ! python3 ../add_names.py -c "$config" "Community Detection" "$communities_out" "$final_communities_out"; then 
          echo "Error: Finding node names in Community Detection output"
+         exit 2
+	fi
+fi
+
+# both ranking & community detection have been executed, merge their results
+if [[ " ${analyses[@]} " =~ "Ranking - Community Detection" ]]; then
+
+	if ! python3 ../merge_results.py -c "$config"; then 
+         echo "Error: Combining Ranking with Community Detection"
          exit 2
 	fi
 fi

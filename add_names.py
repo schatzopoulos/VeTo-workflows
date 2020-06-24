@@ -22,7 +22,7 @@ def parse_entities(entity_file, select_field):
 
     return names_df
 
-def write_output(names, analysis, fin, fout):
+def write_output(names, analysis, fin, fout, community_details_out):
 
     # read community detection result
     if analysis == "Ranking":
@@ -32,18 +32,21 @@ def write_output(names, analysis, fin, fout):
         df = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Community"])
         result = df.sort_values(by=["Community"])
 
+        # count total communities and entities inside each community
+        community_counts =  df.groupby('Community')['id'].nunique()
+        community_counts.loc["total"] = community_counts.count()
+        community_counts.to_json(community_details_out)
 
-    # combine ranking and community detection results
-    # if cdf is not None and rdf is not None:
-    #     result = cdf.merge(rdf, on="id", how='inner')
-    #     result.sort_values(by=["Community", "Ranking Score"], ascending=[True, False], inplace=True)
 
-    
     result = result.merge(names, on="id", how='inner')
     del result['id']
     result.rename(columns={'name': 'Entity'}, inplace=True)
+
     cols = result.columns.tolist()
-    cols = cols[-1:] + cols[:-1]        # move name first
+
+    # in case of ranking, move name first
+    if analysis == "Ranking":
+        cols = cols[-1:] + cols[:-1]
 
     result[cols].to_csv(fout, index = False, sep='\t')
 
@@ -53,9 +56,10 @@ with open(sys.argv[2]) as config_file:
     fin = sys.argv[4]
     fout = sys.argv[5]
     config = json.load(config_file)
+    community_details = config["communities_details"]
     
     entity_file = config["indir"] + config["query"]["metapath"][:1] + ".csv"
 
     names = parse_entities(entity_file, config["select_field"])
-    write_output(names, analysis, fin, fout)
+    write_output(names, analysis, fin, fout, community_details)
     print(analysis + "\t3\tCompleted")
