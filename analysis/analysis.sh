@@ -4,9 +4,11 @@ cd "$(dirname "$0")"
 config="$1"
 
 # performs HIN transformation and ranking (if needed)
-if ! spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"; then
-       echo "Error: HIN Transformation"
-       exit 1
+spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
+ret_val=$?
+if [ $ret_val -ne 0 ]; then
+   	echo "Error: HIN Transformation"
+   	exit $ret_val
 fi
 
 analyses=`cat "$config" | jq -r .analyses`
