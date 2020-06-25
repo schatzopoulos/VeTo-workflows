@@ -4,7 +4,7 @@ cd "$(dirname "$0")"
 config="$1"
 
 # performs HIN transformation and ranking (if needed)
-spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
+spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --driver-memory=40G --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
    	echo "Error: HIN Transformation"
@@ -29,7 +29,7 @@ if [[ " ${analyses[@]} " =~ "Similarity Join" ]]; then
 	# find hin folder from json config 
 	join_hin=`cat "$config" | jq -r .join_hin_out`
 
-	if ! java -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Join" "$join_hin/part-"*; then
+	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Join" "$join_hin/part-"*; then
 	        echo "Error: Similarity Join"
 	        exit 2
 	fi
@@ -45,7 +45,7 @@ if [[ " ${analyses[@]} " =~ "Similarity Search" ]]; then
 	# find hin folder from json config 
 	join_hin=`cat "$config" | jq -r .join_hin_out`
 
-	if ! java -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Search" "$join_hin/part-"*; then
+	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Search" "$join_hin/part-"*; then
 	        echo "Error: Similarity Search"
 	        exit 2
 	fi
