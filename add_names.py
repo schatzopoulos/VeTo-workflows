@@ -1,63 +1,65 @@
 import sys
 import csv
 import json
-
-with open(sys.argv[2]) as config_file:
-    config = json.load(config_file)
-    metapath = config["query"]["metapath"]
-    nodes_dir = config["indir"]
-    outfile = config["final_out"]
-    input_pr = config["analysis_out"]
-    select_field = config["select_field"]
-    first_entity = metapath[:1]
-
-entity_file = nodes_dir + first_entity + ".csv"
-
-
-with open(entity_file) as fp:
+import os  
+import pandas as pd 
+ 
+def parse_entities(entity_file, select_field):
+    with open(entity_file) as fp:
     
-    # read header file
-    line = fp.readline()
-
-    fields = line.rstrip().split('\t')
-    for i in range(len(fields)):
-
-        if select_field in fields[i]: 
-            break
-
-    select_field_idx = i
-
-    # assign names to ids 
-    names = {}
-    while line:
-        line = line.rstrip()
-        parts = line.strip().split("\t")
-        names[parts[0]] = parts[select_field_idx]
+        # read header file and determine selected column
         line = fp.readline()
 
+        fields = line.rstrip().split('\t')
+        for i in range(len(fields)):
 
-# read analysis resuls and append names
-with open(outfile, 'w', newline='') as csvfile:
-    filewriter = csv.writer(csvfile, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            if select_field in fields[i]: 
+                break
 
-    with open(input_pr) as fd:
-        
-        for line in fd:
-        # for line in sys.stdin:
+        select_field_idx = i
 
-            line = line.rstrip()
-            parts = line.split("\t")
+        names_df = pd.read_csv(entity_file, sep='\t', usecols=["id", select_field])
 
-            row_data = []
-            # loop in all columns except last one
-            for col in range(len(parts)-1):
-                # print(parts[col])
-                value = 'Unknown'
-                if parts[col] in names:
-                    value = names[parts[col]]
+    return names_df
 
-                row_data.append(parts[col] + "|" + value)
+def write_output(names, analysis, fin, fout, community_details_out):
 
-            # append last column that is the score of the analysis
-            row_data.append(parts[len(parts)-1])
-            filewriter.writerow(row_data)
+    # read community detection result
+    if analysis == "Ranking":
+        result = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Ranking Score"])
+
+    elif analysis == "Community Detection":
+        df = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Community"])
+        result = df.sort_values(by=["Community"])
+
+        # count total communities and entities inside each community
+        community_counts =  df.groupby('Community')['id'].nunique()
+        community_counts.loc["total"] = community_counts.count()
+        community_counts.to_json(community_details_out)
+
+
+    result = result.merge(names, on="id", how='inner')
+    del result['id']
+    result.rename(columns={'name': 'Entity'}, inplace=True)
+
+    cols = result.columns.tolist()
+
+    # in case of ranking, move name first
+    if analysis == "Ranking":
+        cols = cols[-1:] + cols[:-1]
+
+    result[cols].to_csv(fout, index = False, sep='\t')
+
+
+with open(sys.argv[2]) as config_file:
+    analysis = sys.argv[3]
+    fin = sys.argv[4]
+    fout = sys.argv[5]
+    config = json.load(config_file)
+    community_details = config["communities_details"]
+    
+    entity_file = config["indir"] + config["query"]["metapath"][:1] + ".csv"
+
+    names = parse_entities(entity_file, config["select_field"])
+    write_output(names, analysis, fin, fout, community_details)
+    print(analysis + "\t3\tCompleted")
