@@ -88,21 +88,16 @@ if [[ " ${analyses[@]} " =~ "Community Detection" ]]; then
 	final_communities_out=`cat "$config" | jq -r .final_communities_out`
 	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
 	
-	# copy HIN file from hdfs
-	hadoop dfs -copyToLocal "$hin/part-"* "$local_hin"
-	
 	current_dir=`pwd`
 
 	# call community detection algorithm
 	cd ../louvain/
 
-	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$local_hin" -o "$communities_out" 2>/dev/null; then
+	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-"* -o "$communities_out" 2>/dev/null; then
 		echo "Error: Community Detection"
 		clean_exit 3
 	fi
-	
-	rm "$local_hin"
-	
+		
 	cd $current_dir
 
 	if ! python3 ../add_names.py -c "$config" "Community Detection" "$communities_out" "$final_communities_out"; then 
