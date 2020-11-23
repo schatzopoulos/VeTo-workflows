@@ -48,8 +48,8 @@ if "Ranking" in analyses or "Community Detection" in analyses:
 	# abort when resulted network contains no edges or is huge
 	if edges_count == 0:
 		sys.exit(100)
-	elif edges_count >= 7500000:
-		sys.exit(200)
+# 	elif edges_count >= 7500000:
+# 		sys.exit(200)
 
 	if "Ranking" in analyses:
 		graph.pagerank(hgraph, alpha, tol, ranking_out)
