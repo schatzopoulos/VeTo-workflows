@@ -16,6 +16,7 @@ spark-submit \
  --total-executor-cores 60 \
  --executor-memory 25G \
  --num-executors 8 \
+ --packages graphframes:graphframes:0.8.0-spark3.0-s_2.12 \
  --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
 ret_val=$?
 if [ $ret_val -ne 0 ]; then
@@ -83,22 +84,22 @@ fi
 if [[ " ${analyses[@]} " =~ "Community Detection" ]]; then
 
 	# find hin folder from json config 
-	hin=`cat "$config" | jq -r .hin_out`
+# 	hin=`cat "$config" | jq -r .hin_out`
 	communities_out=`cat "$config" | jq -r .communities_out`
 	final_communities_out=`cat "$config" | jq -r .final_communities_out`
-	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
+# 	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
 	
-	current_dir=`pwd`
+# 	current_dir=`pwd`
 
-	# call community detection algorithm
-	cd ../louvain/
+# 	# call community detection algorithm
+# 	cd ../louvain/
 
-	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-"* -o "$communities_out" 2>/dev/null; then
-		echo "Error: Community Detection"
-		clean_exit 3
-	fi
+# 	if ! bash ./bin/louvain -m "local[8]" -p 8 -i "$hin/part-"* -o "$communities_out" 2>/dev/null; then
+# 		echo "Error: Community Detection"
+# 		clean_exit 3
+# 	fi
 		
-	cd $current_dir
+# 	cd $current_dir
 
 	if ! python3 ../add_names.py -c "$config" "Community Detection" "$communities_out" "$final_communities_out"; then 
          echo "Error: Finding node names in Community Detection output"

@@ -8,7 +8,7 @@ from SparseMatrix import SparseMatrix
 from DynamicOptimizer import DynamicOptimizer
 from array import array
 import operator
-# from graphframes import GraphFrame
+from graphframes import GraphFrame
 
 
 class Graph:
@@ -142,10 +142,12 @@ class Graph:
 
 		return Pagerank.execute(links, alpha, tol, outfile)
 
-	# def lpa(self, graph, outfile):
-	# 	edges = graph.get_df().select(col('row').alias('src'), col('col').alias('dst'))
-	# 	vertices = edges.select('src').union(edges.select('dst')).distinct().withColumnRenamed('src', 'id')
+	def lpa(self, graph, iter, outfile):
+		print("Community Detection\t1\tInitializing Algorithm", flush=True)
+		edges = graph.get_df().select(col('row').alias('src'), col('col').alias('dst'))
+		vertices = edges.select('src').union(edges.select('dst')).distinct().withColumnRenamed('src', 'id')
 
-	# 	graph = GraphFrame(vertices, edges)
-	# 	result = graph.labelPropagation(maxIter=5)
-	# 	result.orderBy('label', ascending=True).withColumnRenamed('label', 'Community').write.csv(outfile, sep='\t')
+		print("Community Detection\t2\tExecuting Label Propagation Algorithm", flush=True)
+		graph = GraphFrame(vertices, edges)
+		result = graph.labelPropagation(maxIter=iter)
+		result.orderBy('label', ascending=True).withColumnRenamed('label', 'Community').coalesce(1).write.csv(outfile, sep='\t')

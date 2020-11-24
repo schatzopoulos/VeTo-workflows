@@ -31,13 +31,20 @@ def write_output(names, analysis, fin, fout, community_details_out):
             result = pd.read_csv(fd, sep='\t', header=None, names=["id", "Ranking Score"])
 
     elif analysis == "Community Detection":
-        df = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Community"])
-        result = df.sort_values(by=["Community"])
+        files = hdfs.ls(fin)
+        # find file that has "part-" in the filename; it is the result
+        for f in files:
+          if "part-" in f:
+            break
+        
+        with hdfs.open(f) as fd:            
+          df = pd.read_csv(fd, sep='\t', header=None, names=["id", "Community"])
+          result = df.sort_values(by=["Community"])
 
-        # count total communities and entities inside each community
-        community_counts =  df.groupby('Community')['id'].nunique()
-        community_counts.loc["total"] = community_counts.count()
-        community_counts.to_json(community_details_out)
+          # count total communities and entities inside each community
+          community_counts =  df.groupby('Community')['id'].nunique()
+          community_counts.loc["total"] = community_counts.count()
+          community_counts.to_json(community_details_out)
 
 
     result = result.merge(names, on="id", how='inner')
