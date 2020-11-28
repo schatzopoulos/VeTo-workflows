@@ -12,9 +12,10 @@ print("Community Detection\t3\tCombining Results with Ranking Scores")
 # read both ranking & community detection results
 ranking_df = pd.read_csv(config["final_ranking_out"], sep='\t')
 community_df = pd.read_csv(config["final_communities_out"], sep='\t')
+select_field = config["select_field"]
 
 # join on Entity column
-result = ranking_df.merge(community_df, on="Entity", how='inner')
+result = ranking_df.merge(community_df, on=select_field, how='inner')
 
 result.sort_values(by=["Community", "Ranking Score"], ascending=[True, False], inplace=True)
 

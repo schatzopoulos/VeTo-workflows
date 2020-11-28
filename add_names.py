@@ -49,7 +49,7 @@ def write_output(names, analysis, fin, fout, community_details_out):
 
     result = result.merge(names, on="id", how='inner')
     del result['id']
-    result.rename(columns={'name': 'Entity'}, inplace=True)
+    # result.rename(columns={'name': 'Entity'}, inplace=True)
 
     cols = result.columns.tolist()
 
