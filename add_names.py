@@ -3,7 +3,8 @@ import csv
 import json
 import os  
 import pandas as pd 
- 
+import pydoop.hdfs as hdfs
+
 def parse_entities(entity_file, select_field):
     with open(entity_file) as fp:
     
@@ -26,21 +27,29 @@ def write_output(names, analysis, fin, fout, community_details_out):
 
     # read community detection result
     if analysis == "Ranking":
-        result = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Ranking Score"])
+        with hdfs.open(fin + "/part-00000") as fd:
+            result = pd.read_csv(fd, sep='\t', header=None, names=["id", "Ranking Score"])
 
     elif analysis == "Community Detection":
-        df = pd.read_csv(fin + "/part-00000", sep='\t', header=None, names=["id", "Community"])
-        result = df.sort_values(by=["Community"])
+        files = hdfs.ls(fin)
+        # find file that has "part-" in the filename; it is the result
+        for f in files:
+          if "part-" in f:
+            break
+        
+        with hdfs.open(f) as fd:            
+          df = pd.read_csv(fd, sep='\t', header=None, names=["id", "Community"])
+          result = df.sort_values(by=["Community"])
 
-        # count total communities and entities inside each community
-        community_counts =  df.groupby('Community')['id'].nunique()
-        community_counts.loc["total"] = community_counts.count()
-        community_counts.to_json(community_details_out)
+          # count total communities and entities inside each community
+          community_counts =  df.groupby('Community')['id'].nunique()
+          community_counts.loc["total"] = community_counts.count()
+          community_counts.to_json(community_details_out)
 
 
     result = result.merge(names, on="id", how='inner')
     del result['id']
-    result.rename(columns={'name': 'Entity'}, inplace=True)
+    # result.rename(columns={'name': 'Entity'}, inplace=True)
 
     cols = result.columns.tolist()
 
@@ -58,7 +67,7 @@ with open(sys.argv[2]) as config_file:
     config = json.load(config_file)
     community_details = config["communities_details"]
     
-    entity_file = config["indir"] + config["query"]["metapath"][:1] + ".csv"
+    entity_file = config["indir_local"] + config["query"]["metapath"][:1] + ".csv"
 
     names = parse_entities(entity_file, config["select_field"])
     write_output(names, analysis, fin, fout, community_details)

@@ -33,7 +33,7 @@ with open(config_file) as fd:
 		metapath = config["query"]["metapath"]
 		joinpath = config["query"]["joinpath"]
 		constraints = config["query"]["constraints"]
-
+		community_detection_iter = int(config["community_detection_iter"])
 printLogs = True
 if "Ranking" in analyses or "Community Detection" in analyses:
 	
@@ -48,15 +48,15 @@ if "Ranking" in analyses or "Community Detection" in analyses:
 	# abort when resulted network contains no edges or is huge
 	if edges_count == 0:
 		sys.exit(100)
-	elif edges_count >= 7500000:
-		sys.exit(200)
+# 	elif edges_count >= 7500000:
+# 		sys.exit(200)
 
 	if "Ranking" in analyses:
 		graph.pagerank(hgraph, alpha, tol, ranking_out)
 
 	if "Community Detection" in analyses:
-		hgraph.write(hin_out)
-		# graph.lpa(hgraph, communities_out)
+# 		hgraph.write(hin_out)
+		graph.lpa(hgraph, community_detection_iter, communities_out)
 
 	printLogs = False
 
