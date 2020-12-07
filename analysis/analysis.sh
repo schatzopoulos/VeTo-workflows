@@ -3,15 +3,15 @@ cd "$(dirname "$0")"
 config="$1"
 
 function clean_exit() {
-	hadoop dfs -rm -r `cat "$config" | jq -r .hdfs_out_dir` > /dev/null
+# 	hadoop dfs -rm -r `cat "$config" | jq -r .hdfs_out_dir` > /dev/null
 	exit $1
 }
 
 # performs HIN transformation and ranking (if needed)
-# spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --driver-memory=40G --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
+# spark-submit --master local[*] --conf spark.sql.shuffle.partitions=32 --driver-memory=40G --packages graphframes:graphframes:0.8.0-spark3.0-s_2.12 --py-files=../hminer/sources.zip ../hminer/Hminer.py "$config"
 spark-submit \
  --master spark://62.217.82.255:7077 \
- --conf spark.sql.shuffle.partitions=60 \
+ --conf spark.sql.shuffle.partitions=120 \
  --executor-cores 8 \
  --total-executor-cores 60 \
  --executor-memory 25G \
@@ -39,18 +39,18 @@ fi
 
 if [[ " ${analyses[@]} " =~ "Similarity Join" ]]; then
 
-	# find hin folder from json config 
-	join_hin=`cat "$config" | jq -r .join_hin_out`
-	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
+#	# find hin folder from json config 
+#	join_hin=`cat "$config" | jq -r .join_hin_out`
+#	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
 	
-	# copy HIN file from hdfs
-	hadoop dfs -copyToLocal "$join_hin/part-"* "$local_hin"
+#	# copy HIN file from hdfs
+#	hadoop dfs -copyToLocal "$join_hin/part-"* "$local_hin"
 	
-	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Join" "$local_hin"; then
-	        echo "Error: Similarity Join"
-	        clean_exit 2
-	fi
-	rm "$local_hin"
+#	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Join" "$local_hin"; then
+#	        echo "Error: Similarity Join"
+#	        clean_exit 2
+#	fi
+#	rm "$local_hin"
 	
 	if ! python3 ../similarity/add_names_sim.py -c "$config" "Similarity Join"; then 
          echo "Error: Finding node names in Similarity Join output"
@@ -60,19 +60,19 @@ fi
 
 if [[ " ${analyses[@]} " =~ "Similarity Search" ]]; then
 
-	# find hin folder from json config 
-	join_hin=`cat "$config" | jq -r .join_hin_out`
-	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
+#	# find hin folder from json config 
+#	join_hin=`cat "$config" | jq -r .join_hin_out`
+#	local_hin=`cat "$config" | jq -r .local_out_dir`/LOCAL_HIN
 	
-	# copy HIN file from hdfs
-	hadoop dfs -copyToLocal "$join_hin/part-"* "$local_hin"
+#	# copy HIN file from hdfs
+#	hadoop dfs -copyToLocal "$join_hin/part-"* "$local_hin"
 	
-	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Search" "$local_hin"; then
-	        echo "Error: Similarity Search"
-	        clean_exit 2
-	fi
+#	if ! java -Xmx40G -jar ../similarity/EntitySimilarity-1.0-SNAPSHOT.jar -c "$config" "Similarity Search" "$local_hin"; then
+#	        echo "Error: Similarity Search"
+#	        clean_exit 2
+#	fi
 	
-	rm "$local_hin"
+#	rm "$local_hin"
 	
 	if ! python3 ../similarity/add_names_sim.py -c "$config" "Similarity Search"; then 
          echo "Error: Finding node names in Similarity Search output"
