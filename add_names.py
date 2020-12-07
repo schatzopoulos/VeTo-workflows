@@ -29,7 +29,9 @@ def write_output(names, analysis, fin, fout, community_details_out):
     if analysis == "Ranking":
         with hdfs.open(fin + "/part-00000") as fd:
             result = pd.read_csv(fd, sep='\t', header=None, names=["id", "Ranking Score"])
-
+            max_ranking_score = result["Ranking Score"].max()
+            result["Ranking Score"] /= max_ranking_score
+            
     elif analysis == "Community Detection":
         files = hdfs.ls(fin)
         # find file that has "part-" in the filename; it is the result

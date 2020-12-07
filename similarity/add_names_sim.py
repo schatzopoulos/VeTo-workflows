@@ -3,7 +3,8 @@ import csv
 import json
 import os  
 import pandas as pd 
- 
+import pydoop.hdfs as hdfs
+
 def parse_entities(entity_file, select_field):
     with open(entity_file) as fp:
     
@@ -23,22 +24,39 @@ def parse_entities(entity_file, select_field):
     return names_df
 
 def write_output(names, fin, fout):
+    
+# 		# in similarity search when no results are found, results file is not present
+# 		# so create an empty local file to indicate no results found
+# 		if os.path.isdir(fin) == False:
+# 			fd = open(fout, "w")
+# 			fd.close()
+# 			return
+			
+		files = hdfs.ls(fin)
+		# find file that has "part-" in the filename; it is the result
+		for f in files:
+			if "part-" in f:
+				break
 
-    result = pd.read_csv(fin, sep='\t', header=None, names=["id", "id 2", "Similarity Score"])
-    result = result.merge(names, on="id", how='inner')
+		with hdfs.open(f) as fd:            
 
-    result.rename(columns={ 'name': 'Entity 1', 'id': 'id 1', 'id 2': 'id' }, inplace=True)
+			result = pd.read_csv(fd, sep='\t', header=None, names=["id", "id 2", "Euclidean Distance"])
+			result = result.merge(names, on="id", how='inner')
 
-    result = result.merge(names, on="id", how='inner')
+			result.rename(columns={ 'name': 'Entity 1', 'id': 'id 1', 'id 2': 'id' }, inplace=True)
 
-    result.rename(columns={ 'name': 'Entity 2', 'id': 'id 2' }, inplace=True)
-    del result['id 1']
-    del result['id 2']
+			result = result.merge(names, on="id", how='inner')
 
-    result[['Entity 1', 'Entity 2', 'Similarity Score']].to_csv(fout, index = False, sep='\t')
+			result.rename(columns={ 'name': 'Entity 2', 'id': 'id 2' }, inplace=True)
+			del result['id 1']
+			del result['id 2']
+      
+			result = result.sort_values(by=["Euclidean Distance"])
+			result[['Entity 1', 'Entity 2', 'Euclidean Distance']].to_csv(fout, index = False, sep='\t')
 
 
 with open(sys.argv[2]) as config_file:
+    print("Similarity Analysis\t3\tSorting and writing results")
 
     config = json.load(config_file)
     join_in = config["sim_join_out"]
@@ -52,9 +70,10 @@ with open(sys.argv[2]) as config_file:
 
     if sys.argv[3] == "Similarity Join":
         write_output(names, join_in, join_out)
-        print("Similarity Join\t3\tCompleted")
 
     if sys.argv[3] == "Similarity Search":
         write_output(names, search_in, search_out)
-        print("Similarity Search\t3\tCompleted")
+    
+    print(sys.argv[3] + "\t3\tCompleted")
+
 

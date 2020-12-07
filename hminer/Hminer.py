@@ -5,6 +5,7 @@ import json
 from Graph import Graph
 import time
 from pyspark.sql.functions import col
+# from ResultsParser import ResultsParser
 
 if len(sys.argv) != 2:
 	print("Usage: spark-submit hminer.py config.json", file=sys.stderr)
@@ -35,37 +36,39 @@ with open(config_file) as fd:
 		constraints = config["query"]["constraints"]
 		community_detection_iter = int(config["community_detection_iter"])
 printLogs = True
+	
 if "Ranking" in analyses or "Community Detection" in analyses:
+  # In ranking and community detection a homegeneous graph is needed
+  graph = Graph()
+  graph.build(spark, metapath, nodes_dir, relations_dir, constraints, printLogs)
+  res_hin = graph.transform(spark, printLogs)
+
+  # apply filter in case of ranking and community detection
+  res_hin.filter(col("val") >= edgesThreshold)
+  
+  # abort when resulted network contains no edges
+  if res_hin.non_zero() == 0:
+    sys.exit(100)
 	
-	# In ranking and community detection a homegeneous graph is needed 
-	graph = Graph()
-	graph.build(spark, metapath, nodes_dir, relations_dir, constraints, printLogs)
-	hgraph = graph.transform(spark, printLogs)
+  # write output hin to hdfs
+  res_hin.write(hin_out)
 	
-	hgraph.filter(col("val") >=  edgesThreshold)
-	edges_count = hgraph.non_zero()
+  if "Ranking" in analyses:
+    graph.pagerank(res_hin, alpha, tol, ranking_out)
 
-	# abort when resulted network contains no edges or is huge
-	if edges_count == 0:
-		sys.exit(100)
-# 	elif edges_count >= 7500000:
-# 		sys.exit(200)
-
-	if "Ranking" in analyses:
-		graph.pagerank(hgraph, alpha, tol, ranking_out)
-
-	if "Community Detection" in analyses:
-# 		hgraph.write(hin_out)
-		graph.lpa(hgraph, community_detection_iter, communities_out)
-
-	printLogs = False
-
-# the graph differs in case of similarity search & join
+  if "Community Detection" in analyses:
+    graph.lpa(res_hin, community_detection_iter, communities_out)
+  
+  printLogs = False
+  
 if "Similarity Join" in analyses or "Similarity Search" in analyses:
-	graph = Graph()
-	graph.build(spark, joinpath, nodes_dir, relations_dir, constraints, printLogs)
-	hgraph = graph.transform(spark, printLogs)
+  graph = Graph()
+  graph.build(spark, joinpath, nodes_dir, relations_dir, constraints, printLogs)
+  
+  # write output hin to hdfs
+  # 	res_hin.write(join_hin_out)
 	
-	hgraph.sort()	# similarity join & search code assumes sorted input graph
-
-	hgraph.write(join_hin_out)
+  res_hin = graph.transform(spark, printLogs)
+  
+  graph.similarities(res_hin, config)
+  
