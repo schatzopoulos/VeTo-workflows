@@ -29,14 +29,18 @@ def write_output(names, analysis, fin, fout, community_details_out, hdfs_hin_pat
     if analysis == "Ranking":
         with hdfs.open(fin + "/part-00000") as fd:
             result = pd.read_csv(fd, sep='\t', header=None, names=["id", "Ranking Score"])
-
             # set the target node ids as the ids of the first 10 results of ranking
-            target_hin_nodes = {row[1]['id']:row[1]['Ranking score'] for row in result.head(10).iterrows()}
+            target_hin_nodes = {row[1]['id']:row[1]['Ranking Score'] for row in result.head(10).iterrows()}
             max_ranking_score = result["Ranking Score"].max()
             result["Ranking Score"] /= max_ranking_score
 
-            # read hin file and store hin edge entries that connect nodes with the target ids
-            with hdfs.open(hdfs_hin_path) as hin_edges:
+            # read hin file and store hin edge entries that connect nodes with the target ids\
+            files = hdfs.ls(hdfs_hin_path)
+            # find file that has "part-" in the filename; it is the result
+            for f in files:
+                if "part-" in f:
+                    break
+            with hdfs.open(f) as hin_edges:
                 edge_entries = pd.read_csv(hin_edges, sep='\t', header=None, names=['id0', 'id1', 'weight'])
                 target_edges = edge_entries[edge_entries['id0'].isin(target_hin_nodes)][
                     edge_entries['id1'].isin(target_hin_nodes)]
