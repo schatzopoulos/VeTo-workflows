@@ -49,15 +49,17 @@ if "Ranking" in analyses or "Community Detection" in analyses:
   # abort when resulted network contains no edges
   if res_hin.non_zero() == 0:
     sys.exit(100)
-	
-  # write output hin to hdfs
-  res_hin.write(hin_out)
-	
+		
   if "Ranking" in analyses:
     graph.pagerank(res_hin, alpha, tol, ranking_out)
 
   if "Community Detection" in analyses:
     graph.lpa(res_hin, community_detection_iter, communities_out)
+    
+  # write output hin to hdfs
+  res_hin.filter(col("row") != col("col"))
+  res_hin.sort()
+  res_hin.write(hin_out)
   
   printLogs = False
   
