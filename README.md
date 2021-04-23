@@ -1,7 +1,7 @@
-# SciNeM Workflows
+# VeTo Workflows
 
-Contains workflows needed by [SciNeM](https://github.com/schatzopoulos/SciNeM) application. 
+Contains workflows needed by [VeTo](https://github.com/schatzopoulos/VeTo) application. 
 
 This repo contains workflows for the following operations in HINs: 
-* entity ranking [(HRank)](https://github.com/smartdatalake/HMiner)
-* similarity-join [(PSJoin)](https://github.com/schatzopoulos/psjoin)
+* similarity-search [(PSJoin)](https://github.com/schatzopoulos/psjoin)
+* expert set expansion [(VeTo)](https://github.com/vergoulis/rev-sim-recommender)
