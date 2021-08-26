@@ -18,7 +18,7 @@ apv=`cat "$config" | jq -r .apv_hin`
 apv_sims=`cat "$config" | jq -r .apv_sims_dir`
 mkdir "$apv_sims"
 
-if ! java -jar EntitySimilarity.jar "$apv" "$expert_set" "$sim_min_values" "$sim_threshold" > "$apv_sims"/similarities.csv; then 
+if ! java -jar ./heysim-veto/target/EntitySimilarity-1.0-SNAPSHOT.jar "$apv" "$expert_set" "$sim_min_values" "$sim_threshold" > "$apv_sims"/similarities.csv; then 
 	echo "Error: Calculating expert similarities based on venues"
  	clean_exit 2
 fi
@@ -36,7 +36,7 @@ apt=`cat "$config" | jq -r .apt_hin`
 apt_sims=`cat "$config" | jq -r .apt_sims_dir`
 mkdir "$apt_sims"
 
-if ! java -jar EntitySimilarity.jar "$apt" "$expert_set" "$sim_min_values" "$sim_threshold" > "$apt_sims"/similarities.csv; then 
+if ! java -jar ./heysim-veto/target/EntitySimilarity-1.0-SNAPSHOT.jar "$apt" "$expert_set" "$sim_min_values" "$sim_threshold" > "$apt_sims"/similarities.csv; then 
 	echo "Error: Calculating expert similarities based on topics"
  	clean_exit 3
 fi
