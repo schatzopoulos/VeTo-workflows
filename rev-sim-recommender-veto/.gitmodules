@@ -1,0 +1,3 @@
+[submodule "EntitySimilarity"]
+	path = EntitySimilarity
+	url = https://github.com/schatzopoulos/EntitySimilarity.git

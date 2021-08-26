@@ -59,7 +59,7 @@ veto_output=`cat "$config" | jq -r .veto_output`
 
 echo "$expert_set" "$veto_output" "$apv_sims" "$apt_sims" "$sims_per_expert" "$apt_weight" "$apv_weight" 0 borda "$output_size"
 
-if ! python3 rev-sim-recommender/run_exp.py "$expert_set" "$veto_output" "$apv_sims" "$apt_sims" "$sims_per_expert" "$apt_weight" "$apv_weight" 0 borda "$output_size"; then 
+if ! python3 rev-sim-recommender-veto/run_exp.py "$expert_set" "$veto_output" "$apv_sims" "$apt_sims" "$sims_per_expert" "$apt_weight" "$apv_weight" 0 borda "$output_size"; then 
 	echo "Error: Calculating expert set expansions"
  	clean_exit 3
 fi
