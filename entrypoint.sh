@@ -57,6 +57,8 @@ output_size=`cat "$config" | jq -r .output_size`
 sims_per_expert=`cat "$config" | jq -r .sims_per_expert`
 veto_output=`cat "$config" | jq -r .veto_output`
 
+echo "$expert_set" "$veto_output" "$apv_sims" "$apt_sims" "$sims_per_expert" "$apt_weight" "$apv_weight" 0 borda "$output_size"
+
 if ! python3 rev-sim-recommender/run_exp.py "$expert_set" "$veto_output" "$apv_sims" "$apt_sims" "$sims_per_expert" "$apt_weight" "$apv_weight" 0 borda "$output_size"; then 
 	echo "Error: Calculating expert set expansions"
  	clean_exit 3
@@ -66,7 +68,7 @@ echo -e "6\tMapping expert ids to names"
 author_names=`cat "$config" | jq -r .author_names`
 final_output=`cat "$config" | jq -r .final_output`
 
-if ! python3 add_names.py "$author_names" "$veto_output" "$final_output" ; then 
+if ! python add_names.py "$author_names" "$veto_output" "$final_output" ; then 
          echo "Error: Finding expert set names"
          clean_exit 4
 fi
