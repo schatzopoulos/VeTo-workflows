@@ -17,8 +17,8 @@ apt_dir = sys.argv[4]
 topk_thr = int(sys.argv[5]) #how many of the topk most similar authors will be considered
 alpha = float(sys.argv[6])
 beta = float(sys.argv[7])
-rrf_k = int(sys.argv[8])
-method = sys.argv[9]
+method = sys.argv[8]
+rrf_k = int(sys.argv[9])
 output_size = int(sys.argv[10])
 
 def score(coeff, method, rrf_k, topk_thr, lines_to_read, sim_score):
