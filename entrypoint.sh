@@ -68,7 +68,7 @@ echo -e "6\tMapping expert ids to names"
 author_names=`cat "$config" | jq -r .author_names`
 final_output=`cat "$config" | jq -r .final_output`
 
-if ! python add_names.py "$author_names" "$veto_output" "$final_output" ; then 
+if ! python3 add_names.py "$author_names" "$veto_output" "$final_output" ; then 
          echo "Error: Finding expert set names"
          clean_exit 4
 fi
