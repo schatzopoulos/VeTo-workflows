@@ -1,0 +1,16 @@
+{
+    "apv_hin":"/data/VeTo/VeTo-data/APV-HIN.csv",
+    "apt_hin":"/data/VeTo/VeTo-data/APT-HIN.csv",
+    "author_names":"/data/VeTo/VeTo-data/A.csv",
+    "expert_set":"/data/VeTo/VeTo-results/EXPERT_SET",
+    "apv_sims_dir":"/data/VeTo/VeTo-results/APV_SIMS",
+    "apt_sims_dir":"/data/VeTo/VeTo-results/APT_SIMS",
+    "veto_output":"/data/VeTo/VeTo-results/VETO_OUTPUT",
+    "final_output":"/data/VeTo/VeTo-results/RESULT",
+    "sim_threshold":0.2,
+    "sim_min_values":3,
+    "sims_per_expert":100,
+    "apv_weight":0.5,
+    "apt_weight":0.5,
+    "output_size":500
+}
