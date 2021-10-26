@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Implementation-Title: EntitySimilarity
+Implementation-Version: 1.0-SNAPSHOT
+Archiver-Version: Plexus Archiver
+Built-By: serafeim
+Implementation-Vendor-Id: athenarc.imsi.sdl.similarity
+Spring-Boot-Version: 1.5.6.RELEASE
+Implementation-Vendor: Pivotal Software, Inc.
+Main-Class: org.springframework.boot.loader.JarLauncher
+Start-Class: athenarc.imsi.sdl.similarityjoin.Main
+Spring-Boot-Classes: BOOT-INF/classes/
+Spring-Boot-Lib: BOOT-INF/lib/
+Created-By: Apache Maven 3.6.0
+Build-Jdk: 1.8.0_201
+Implementation-URL: http://projects.spring.io/spring-boot/EntitySimila
+ rity/
+
