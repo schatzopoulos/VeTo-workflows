@@ -8,6 +8,24 @@ This repo contains workflows for the following operations in HINs:
 
 ## How to cite
 ```
+@inproceedings{chatzopoulos2021veto,
+  title={VeTo-web: A Recommendation Tool for the Expansion of Sets of Scholars},
+  author={Chatzopoulos, Serafeim and Vergoulis, Thanasis and Dalamagas, Theodore and Tryfonopoulos, Christos},
+  booktitle={2021 ACM/IEEE Joint Conference on Digital Libraries (JCDL)},
+  pages={334--335},
+  year={2021},
+  organization={IEEE}
+}
+
+@article{chatzopoulos2021veto+,
+  title={VeTo+: improved expert set expansion in academia},
+  author={Chatzopoulos, Serafeim and Vergoulis, Thanasis and Dalamagas, Theodore and Tryfonopoulos, Christos},
+  journal={International Journal on Digital Libraries},
+  pages={1--19},
+  year={2021},
+  publisher={Springer}
+}
+
 @inproceedings{vergoulis2020veto,
   title={Veto: Expert set expansion in academia},
   author={Vergoulis, Thanasis and Chatzopoulos, Serafeim and Dalamagas, Theodore and Tryfonopoulos, Christos},
