@@ -25,6 +25,7 @@ def run_exercise():
                                        username=args.username,
                                        port=args.port)
     db_manager.insert_data_from_json(args.files.split(' '))
+    db_manager.add_indexes()
     db_manager.close()
 
 

@@ -1,5 +1,5 @@
 import json
-from pymongo import MongoClient
+import pymongo
 
 
 class PaperDBManager:
@@ -28,6 +28,13 @@ class PaperDBManager:
                 data = json.loads(json_file)
                 paper_collection.insert_many(data)
 
+    def add_indexes(self):
+        """Adds indexes to the paper collection"""
+        paper_collection = self._db['papers']
+        paper_collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
+        paper_collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
+                                      default_language='english', name='papers_title_abstract_txt_idx')
+
     @classmethod
     def create(cls, database, password=None, username=None, host='localhost', port=27017):
         """
@@ -42,7 +49,7 @@ class PaperDBManager:
         """
         db_manager = cls()
         try:
-            client = MongoClient(host=host, port=port, username=username, password=password)
+            client = pymongo.MongoClient(host=host, port=port, username=username, password=password)
             db_manager._client = client
             db_manager._db = client[database]
             return db_manager
