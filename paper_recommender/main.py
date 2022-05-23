@@ -9,11 +9,12 @@ def _parse_user_args():
     :returns: user arguments
     """
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-d', '--database', help="the name of the database", required=True)
-    arg_parser.add_argument('-pwd', '--password', nargs='?', default=None, help="database password, defaults to None")
-    arg_parser.add_argument('-u', '--username', nargs='?', default=None, help="database user, defaults to None")
-    arg_parser.add_argument('-f', '--files', help="the json files to parse the data from (space separated)", required=True)
-    arg_parser.add_argument('-p', '--port', nargs='?', default=27017, help="database port, defaults to 27017")
+    arg_parser.add_argument('-d', '--database', help='the name of the database', required=True)
+    arg_parser.add_argument('-pwd', '--password', nargs='?', default=None, help='database password, defaults to None')
+    arg_parser.add_argument('-u', '--username', nargs='?', default=None, help='database user, defaults to None')
+    arg_parser.add_argument('-f', '--files', help='the json files to parse the data from (space separated)',
+                            required=True)
+    arg_parser.add_argument('-p', '--port', nargs='?', default=27017, help='database port, defaults to 27017')
     return arg_parser.parse_args()
 
 

@@ -10,7 +10,7 @@ class PaperDBManager:
         self._client = None
 
     def __str__(self):
-        return f"PaperDBManager(db_id={id(self._db)})"
+        return f'PaperDBManager(db_id={id(self._db)})'
 
     def close(self):
         self._client.close()
