@@ -1,4 +1,4 @@
-import secrets
+import local_secrets as secrets
 
 DB_NAME = secrets.DB_NAME
 DB_HOST = secrets.DB_HOST

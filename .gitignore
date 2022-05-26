@@ -2,5 +2,5 @@ ranking/__pycache__/
 hminer/__pycache__/
 paper_recommender/data
 .idea
-secrets.py
+local_secrets.py
 *pyc

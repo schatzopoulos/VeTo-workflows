@@ -37,9 +37,8 @@ class PaperDBManager:
 
     def add_indexes(self):
         """Adds indexes to the paper collection"""
-        paper_collection = self._db['papers']
-        paper_collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
-        paper_collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
+        self._collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
+        self._collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
                                       default_language='english', name='papers_title_abstract_txt_idx')
 
     def perform_search_queries(self, titles_file):
@@ -88,8 +87,9 @@ class PaperDBManager:
         try:
             client = pymongo.MongoClient(host=host, port=port, username=username, password=password)
             db_manager._client = client
-            db_manager._db = client[database]
-            db_manager._collection = client[database]['papers']
+            db = client[database]
+            db_manager._db = db
+            db_manager._collection = db['papers']
             return db_manager
         except Exception as error:
             print("Error connecting to MongoDB database", error)
