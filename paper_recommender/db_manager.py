@@ -1,5 +1,11 @@
 import json
 import pymongo
+import string
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+
+_STOP_WORDS = set(stopwords.words('english'))
+_PUNCTUATION = set(string.punctuation)
 
 
 class PaperDBManager:
@@ -8,6 +14,7 @@ class PaperDBManager:
     def __init__(self):
         self._db = None
         self._client = None
+        self._collection = None
 
     def __str__(self):
         return f'PaperDBManager(db_id={id(self._db)})'
@@ -17,7 +24,7 @@ class PaperDBManager:
 
     def insert_data_from_json(self, json_filenames):
         """Inserts data from the dblp json files"""
-        paper_collection = self._db['papers']
+
         for json_filename in json_filenames:
             print(f'Parsing file: {json_filename}')
             with open(json_filename, encoding='utf-8') as json_f:
@@ -26,7 +33,7 @@ class PaperDBManager:
                 json_file = json_file.replace('}{', '},{')
                 json_file = "[" + json_file + "]"
                 data = json.loads(json_file)
-                paper_collection.insert_many(data)
+                self._collection.insert_many(data)
 
     def add_indexes(self):
         """Adds indexes to the paper collection"""
@@ -34,6 +41,36 @@ class PaperDBManager:
         paper_collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
         paper_collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
                                       default_language='english', name='papers_title_abstract_txt_idx')
+
+    def perform_search_queries(self, titles_file):
+        for title in open(titles_file):
+            self._perform_search_query(title)
+            break
+
+    def _perform_search_query(self, search_term):
+        pipeline = self._build_search_pipeline(search_term)
+        res = self._collection.aggregate(pipeline)
+        print(res)
+
+    @staticmethod
+    def _remove_stopwords_and_punctuation(paper_title):
+        """Removes stopwords and punctuation from a title"""
+        word_tokens = word_tokenize(paper_title)
+        final_tokens = []
+        for w in word_tokens:
+            if not w.lower() in _STOP_WORDS and not w.lower() in _PUNCTUATION:
+                final_tokens.append(w)
+        return ' '.join(final_tokens)
+
+    @staticmethod
+    def _build_search_pipeline(search_term):
+        return [
+            {'$match': {'$text': {'$search': f'{search_term}'}}},
+            {'$project': {'id': 1, 'title': 1, '_id': 0, 'abstract': 1,
+                          'rscore': {'$round': [{'$meta': 'textScore'}, 2]}, 'year': 1}},
+            {'$sort': {'score': {'$meta': 'textScore'}}},
+            {'$limit': 20}
+        ]
 
     @classmethod
     def create(cls, database, password=None, username=None, host='localhost', port=27017):
@@ -52,6 +89,7 @@ class PaperDBManager:
             client = pymongo.MongoClient(host=host, port=port, username=username, password=password)
             db_manager._client = client
             db_manager._db = client[database]
+            db_manager._collection = client[database]['papers']
             return db_manager
         except Exception as error:
             print("Error connecting to MongoDB database", error)
