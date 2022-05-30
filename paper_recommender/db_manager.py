@@ -33,11 +33,11 @@ class PaperDBManager:
         for json_filename in json_filenames:
             print(f'Parsing file: {json_filename}')
             with open(json_filename, encoding='utf-8') as json_f:
-                json_file = json_f.read()
-                json_file = json_file.replace('\n', '')
-                json_file = json_file.replace('}{', '},{')
-                json_file = "[" + json_file + "]"
-                data = json.loads(json_file)
+                data = []
+                for item in json_f:
+                    data.append(
+                        OrderedDict(json.loads(item))
+                    )
                 self._paper_collection.insert_many(data)
 
     def _insert_veto_aminer_id_mapping(self, aminer_ids_file):
