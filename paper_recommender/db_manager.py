@@ -12,6 +12,8 @@ _PUNCTUATION = set(string.punctuation)
 
 class PaperDBManager:
     """DB Wrapper for the paper database"""
+    PAPER_KEY = 'papers'
+    AMINER_MAPPER_KEY = 'aminer_mapper'
 
     def __init__(self):
         self._db = None
@@ -62,15 +64,18 @@ class PaperDBManager:
         self._aminer_mapper_collection.create_index([('aminer_id', pymongo.ASCENDING)],
                                                     unique=True, name='aminer_mapper_aminer_id_uidx')
 
-    def perform_search_queries(self, titles_file):
-        for title in open(titles_file):
-            self._perform_search_query(title)
+    def perform_search_queries(self, id_file):
+        for veto_id in open(id_file):
+            self._perform_search_query(veto_id.strip())
             break
 
-    def _perform_search_query(self, search_term):
-        pipeline = self._build_search_pipeline(search_term)
-        res = self._paper_collection.aggregate(pipeline)
-        print(res)
+    def _perform_search_query(self, veto_id):
+        mapping_pipeline = self._build_mapping_pipeline(veto_id)
+        res = self._aminer_mapper_collection.aggregate(mapping_pipeline)
+        print(list(res))
+        # pipeline = self._build_search_pipeline(search_term)
+        # res = self._paper_collection.aggregate(pipeline)
+        # print(res)
 
     @staticmethod
     def _remove_stopwords_and_punctuation(paper_title):
@@ -84,12 +89,28 @@ class PaperDBManager:
 
     @staticmethod
     def _build_search_pipeline(search_term):
+        """Search pipeline"""
         return [
             {'$match': {'$text': {'$search': f'{search_term}'}}},
-            {'$project': {'id': 1, 'title': 1, '_id': 0, 'abstract': 1,
-                          'rscore': {'$round': [{'$meta': 'textScore'}, 2]}, 'year': 1}},
+            {'$project': {'id': 1, '_id': 0}},
             {'$sort': {'score': {'$meta': 'textScore'}}},
             {'$limit': 20}
+        ]
+
+    def _build_mapping_pipeline(self, veto_id):
+        """Mapping pipeline"""
+        return [
+            {'$match': {'id': f'{veto_id}'}},
+            {'$lookup': {
+                'from': f'{self.PAPER_KEY}',
+                'localField': 'aminer_id',
+                'foreignField': 'id',
+                'as': 'mapping'
+            }
+            },
+            {'$unwind': '$mapping'},
+            {'$replaceRoot': {'newRoot': {'title': '$mapping.title'}}},
+            {'$project': {'_id': 0, 'title': 1}},
         ]
 
     def build(self, json_filenames, aminer_ids_file):
@@ -119,8 +140,8 @@ class PaperDBManager:
             db_manager._client = client
             db = client[database]
             db_manager._db = db
-            db_manager._paper_collection = db['papers']
-            db_manager._aminer_mapper_collection = db['aminer_mapper']
+            db_manager._paper_collection = db[cls.PAPER_KEY]
+            db_manager._aminer_mapper_collection = db[cls.AMINER_MAPPER_KEY]
             return db_manager
         except Exception as error:
             print("Error connecting to MongoDB database", error)

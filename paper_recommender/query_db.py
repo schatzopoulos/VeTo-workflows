@@ -7,8 +7,8 @@ import settings
 def _parse_user_args():
     """Parses the user arguments"""
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-tf', '--title_file',
-                            help='Contains the filename with the titles to perform the db search (newline separated)',
+    arg_parser.add_argument('-vf', '--veto_id_file',
+                            help='Contains the filename with the id to perform the db search (newline separated)',
                             required=True)
     return arg_parser.parse_args()
 
@@ -21,7 +21,7 @@ def query_db():
                                        username=settings.DB_USER,
                                        port=int(settings.DB_PORT),
                                        host=settings.DB_HOST)
-    db_manager.perform_search_queries(args.title_file)
+    db_manager.perform_search_queries(args.veto_id_file)
     db_manager.close()
 
 

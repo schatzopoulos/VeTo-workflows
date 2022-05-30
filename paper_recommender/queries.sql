@@ -6,3 +6,18 @@ db.papers.aggregate(
      { $limit: 20 }
    ]
 )
+
+db.aminer_mapper.aggregate(
+   [   { $match: { id: '2657651'} },
+       { $lookup: {
+            from: "papers",
+            localField: "aminer_id",
+            foreignField: "id",
+           as: "mapping"
+            }
+         },
+         { $unwind: "$mapping" },
+         { $replaceRoot: { newRoot: { title: "$mapping.title" } } },
+         { $project: {_id: 0, title: 1} },
+       ]
+)
