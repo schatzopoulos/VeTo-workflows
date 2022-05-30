@@ -1,3 +1,5 @@
+import csv
+from collections import OrderedDict
 import json
 import pymongo
 import string
@@ -14,7 +16,8 @@ class PaperDBManager:
     def __init__(self):
         self._db = None
         self._client = None
-        self._collection = None
+        self._paper_collection = None
+        self._aminer_mapper_collection = None
 
     def __str__(self):
         return f'PaperDBManager(db_id={id(self._db)})'
@@ -22,7 +25,7 @@ class PaperDBManager:
     def close(self):
         self._client.close()
 
-    def insert_data_from_json(self, json_filenames):
+    def _insert_data_from_json(self, json_filenames):
         """Inserts data from the dblp json files"""
 
         for json_filename in json_filenames:
@@ -33,13 +36,31 @@ class PaperDBManager:
                 json_file = json_file.replace('}{', '},{')
                 json_file = "[" + json_file + "]"
                 data = json.loads(json_file)
-                self._collection.insert_many(data)
+                self._paper_collection.insert_many(data)
 
-    def add_indexes(self):
+    def _insert_veto_aminer_id_mapping(self, aminer_ids_file):
+        """Inserts the aminer to veto id mapper collection"""
+        aminer_key = 'aminer_id'
+        veto_key = 'id'
+        doc_list = []
+        with open(aminer_ids_file, newline='') as csvfile:
+            reader = csv.DictReader(csvfile, delimiter='\t')
+            for row in reader:
+                doc = OrderedDict()
+                doc[aminer_key] = row[aminer_key]
+                doc[veto_key] = row[veto_key]
+                doc_list.append(doc)
+        self._aminer_mapper_collection.insert_many(doc_list)
+
+    def _add_indexes(self):
         """Adds indexes to the paper collection"""
-        self._collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
-        self._collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
-                                      default_language='english', name='papers_title_abstract_txt_idx')
+        self._paper_collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
+        self._paper_collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
+                                            default_language='english', name='papers_title_abstract_txt_idx')
+        self._aminer_mapper_collection.create_index([('id', pymongo.ASCENDING)],
+                                                    unique=True, name='aminer_mapper_id_uidx')
+        self._aminer_mapper_collection.create_index([('aminer_id', pymongo.ASCENDING)],
+                                                    unique=True, name='aminer_mapper_aminer_id_uidx')
 
     def perform_search_queries(self, titles_file):
         for title in open(titles_file):
@@ -48,7 +69,7 @@ class PaperDBManager:
 
     def _perform_search_query(self, search_term):
         pipeline = self._build_search_pipeline(search_term)
-        res = self._collection.aggregate(pipeline)
+        res = self._paper_collection.aggregate(pipeline)
         print(res)
 
     @staticmethod
@@ -71,6 +92,15 @@ class PaperDBManager:
             {'$limit': 20}
         ]
 
+    def build(self, json_filenames, aminer_ids_file):
+        """Builds the database"""
+        print('Adding JSON data ....')
+        self._insert_data_from_json(json_filenames)
+        print('Adding aminer to veto id mapping data ....')
+        self._insert_veto_aminer_id_mapping(aminer_ids_file)
+        print('Adding indexes ....')
+        self._add_indexes()
+
     @classmethod
     def create(cls, database, password=None, username=None, host='localhost', port=27017):
         """
@@ -89,7 +119,8 @@ class PaperDBManager:
             db_manager._client = client
             db = client[database]
             db_manager._db = db
-            db_manager._collection = db['papers']
+            db_manager._paper_collection = db['papers']
+            db_manager._aminer_mapper_collection = db['aminer_mapper']
             return db_manager
         except Exception as error:
             print("Error connecting to MongoDB database", error)
