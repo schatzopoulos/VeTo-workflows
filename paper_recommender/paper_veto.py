@@ -29,10 +29,9 @@ class VetoBase:
     def __str__(self):
         return f'BaseVetoVeto({id(self)})'
 
-    @classmethod
-    def create_from_args(cls):
-        """Create from user arguments"""
-        arg_parser = argparse.ArgumentParser()
+    @staticmethod
+    def _add_args(arg_parser):
+        """Add arguments to arg parser"""
         arg_parser.add_argument('-pf', '--paper_file', required=True, help='paper ids file')
         arg_parser.add_argument('-vo', '--veto_output', required=True, help='file where the results will be written')
         arg_parser.add_argument('-pap', '--pap_sims', required=True, help='directory containing the PAP similarities')
@@ -49,6 +48,12 @@ class VetoBase:
                                 help='rrf k algorithm ranking parameter')
         arg_parser.add_argument('-outs', '--output_size', nargs='?', type=int, default=20,
                                 help='the size of the output')
+
+    @classmethod
+    def create_from_args(cls):
+        """Create from user arguments"""
+        arg_parser = argparse.ArgumentParser()
+        cls._add_args(arg_parser)
         veto_args = arg_parser.parse_args()
 
         return cls(

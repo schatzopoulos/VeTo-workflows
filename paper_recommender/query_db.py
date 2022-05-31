@@ -29,7 +29,9 @@ def query_db():
                                        username=settings.DB_USER,
                                        port=int(settings.DB_PORT),
                                        host=settings.DB_HOST)
-    db_manager.out_keyword_search(id_file=args.veto_id_file,
+    # read the veto ids and related them to aminer ids
+    veto_ids = [veto_id.strip() for veto_id in open(args.veto_id_file)]
+    db_manager.out_keyword_search(veto_ids=veto_ids,
                                   max_papers=args.max_papers,
                                   max_results=args.max_results)
     db_manager.close()
