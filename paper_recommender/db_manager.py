@@ -64,18 +64,32 @@ class PaperDBManager:
         self._aminer_mapper_collection.create_index([('aminer_id', pymongo.ASCENDING)],
                                                     unique=True, name='aminer_mapper_aminer_id_uidx')
 
-    def perform_search_queries(self, id_file):
-        for veto_id in open(id_file):
-            self._perform_search_query(veto_id.strip())
-            break
+    def perform_search_queries(self, id_file, max_papers=20):
+        """Performs search queries to the db"""
+        # read the veto ids and related them to aminer ids
+        veto_ids = [veto_id.strip() for veto_id in open(id_file)]
+        mapping_pipeline = self._build_mapping_pipeline(veto_ids)
 
-    def _perform_search_query(self, veto_id):
-        mapping_pipeline = self._build_mapping_pipeline(veto_id)
-        res = self._aminer_mapper_collection.aggregate(mapping_pipeline)
-        print(list(res))
-        # pipeline = self._build_search_pipeline(search_term)
-        # res = self._paper_collection.aggregate(pipeline)
-        # print(res)
+        excluded_aminer_ids = []
+        search_titles = []
+        for item in self._aminer_mapper_collection.aggregate(mapping_pipeline):
+            excluded_aminer_ids.append(item['aminer_id'])
+            search_titles.append(self._remove_stopwords_and_punctuation(item['title']))
+
+        res = {}
+        for title in search_titles:
+            pipeline = self._build_search_pipeline(title, excluded_aminer_ids, max_papers)
+            max_score = max_papers
+            for item in self._paper_collection.aggregate(pipeline):
+                paper = item['id']
+                if paper in res.keys():
+                    res[paper] += max_score
+                else:
+                    res[paper] = max_score
+                max_score -= 1
+                if max_score == 0:
+                    break
+        print(json.dumps(res, indent=4))
 
     @staticmethod
     def _remove_stopwords_and_punctuation(paper_title):
@@ -88,29 +102,39 @@ class PaperDBManager:
         return ' '.join(final_tokens)
 
     @staticmethod
-    def _build_search_pipeline(search_term):
+    def _build_search_pipeline(search_term, excluded_ids, max_papers):
         """Search pipeline"""
         return [
-            {'$match': {'$text': {'$search': f'{search_term}'}}},
+            {'$match': {'id': {'$nin': excluded_ids}, '$text': {'$search': search_term}}},
             {'$project': {'id': 1, '_id': 0}},
             {'$sort': {'score': {'$meta': 'textScore'}}},
-            {'$limit': 20}
+            {'$limit': max_papers},
+            {'$lookup': {
+                'from': 'aminer_mapper',
+                'localField': 'id',
+                'foreignField': 'aminer_id',
+                'as': 'mapping'
+            }
+            },
+            {'$unwind': '$mapping'},
+            {'$replaceRoot': {'newRoot': {'id': '$mapping.id'}}},
+            {'$project': {'_id': 0, 'id': 1}}
         ]
 
-    def _build_mapping_pipeline(self, veto_id):
+    def _build_mapping_pipeline(self, veto_ids):
         """Mapping pipeline"""
         return [
-            {'$match': {'id': f'{veto_id}'}},
+            {'$match': {'id': {'$in': veto_ids}}},
             {'$lookup': {
-                'from': f'{self.PAPER_KEY}',
+                'from': self.PAPER_KEY,
                 'localField': 'aminer_id',
                 'foreignField': 'id',
                 'as': 'mapping'
             }
             },
             {'$unwind': '$mapping'},
-            {'$replaceRoot': {'newRoot': {'title': '$mapping.title'}}},
-            {'$project': {'_id': 0, 'title': 1}},
+            {'$replaceRoot': {'newRoot': {'title': '$mapping.title', 'aminer_id': '$mapping.id'}}},
+            {'$project': {'_id': 0, 'title': 1, 'aminer_id': 1}},
         ]
 
     def build(self, json_filenames, aminer_ids_file):

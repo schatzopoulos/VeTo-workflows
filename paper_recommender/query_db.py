@@ -10,6 +10,10 @@ def _parse_user_args():
     arg_parser.add_argument('-vf', '--veto_id_file',
                             help='Contains the filename with the id to perform the db search (newline separated)',
                             required=True)
+    arg_parser.add_argument('-mp', '--max_papers',
+                            help='Contains the filename with the id to perform the db search (newline separated)',
+                            default=20,
+                            type=int)
     return arg_parser.parse_args()
 
 
@@ -21,7 +25,7 @@ def query_db():
                                        username=settings.DB_USER,
                                        port=int(settings.DB_PORT),
                                        host=settings.DB_HOST)
-    db_manager.perform_search_queries(args.veto_id_file)
+    db_manager.perform_search_queries(args.veto_id_file, args.max_papers)
     db_manager.close()
 
 

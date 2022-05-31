@@ -10,8 +10,8 @@ csv.register_dialect(
 )
 
 
-class AbstractVeto:
-    """Abstract class for veto"""
+class VetoBase:
+    """Veto base class"""
 
     def __init__(self, paper_file, veto_output, pap_sims, ptp_sims, sims_per_paper=50,
                  pap_weight=0.5, ptp_weight=0.5, algorithm='borda', rrf_k=0, output_size=20):
@@ -27,7 +27,7 @@ class AbstractVeto:
         self.output_size = output_size
 
     def __str__(self):
-        return f'AbstractVeto({id(self)})'
+        return f'BaseVetoVeto({id(self)})'
 
     @classmethod
     def create_from_args(cls):
@@ -73,81 +73,77 @@ class AbstractVeto:
         elif self.algorithm == 'sum':
             return float(sim_score)
 
-    def run(self):
-        """The Run algorithm"""
-        raise NotImplementedError()
-
-
-class PaperVeto(AbstractVeto):
-    """Wrapper class for running veto"""
-
-    def __str__(self):
-        return f'PaperVeto({id(self)})'
-
-    def run(self):
-        """The Run algorithm"""
+    def _get_train_set(self):
+        """Get the train set"""
         train_set = {}
         with open(self.paper_file) as train_file:
             train_entries = csv.reader(train_file, dialect='exp_dialect')
             for entry in train_entries:
                 train_set[entry[0]] = 1
+        return train_set
 
-        # Get suggestions based on HIN
-        hin_sugg = {}
-        for entry in train_set:
-            try:
-                with open(Path(self.pap_sims, entry)) as pap_paper_file:
-                    pap_papers = csv.reader(pap_paper_file, dialect='exp_dialect')
-                    lines_to_read = self.sims_per_paper
-                    for paper in pap_papers:
-                        if paper[1] in train_set.keys():  # do not consider anyone in the training set
-                            continue
-                        lines_to_read -= 1
-                        if lines_to_read == -1:
-                            break
-                        if paper[1] in hin_sugg.keys():
-                            hin_sugg[paper[1]]['pap'] += self.score(self.pap_weight, lines_to_read, paper[2])
-                        else:
-                            hin_sugg[paper[1]] = {}
-                            hin_sugg[paper[1]]['ptp'] = 0
-                            hin_sugg[paper[1]]['pap'] = self.score(self.pap_weight, lines_to_read, paper[2])
-            except FileNotFoundError:
-                pass
+    def _calculate_sim_scores(self, *args, **kwargs):
+        raise NotImplementedError()
 
-            try:
-                with open(Path(self.ptp_sims, entry)) as ptp_paper_file:
-                    ptp_papers = csv.reader(ptp_paper_file, dialect='exp_dialect')
-                    lines_to_read = self.sims_per_paper
-                    for paper in ptp_papers:
-                        if paper[1] in train_set.keys():  # do not consider anyone in the training set
-                            continue
-                        lines_to_read -= 1
-                        if lines_to_read == -1:
-                            break
-                        if paper[1] in hin_sugg.keys():
-                            hin_sugg[paper[1]]['ptp'] += self.score(self.ptp_weight, lines_to_read, paper[2])
-                        else:
-                            hin_sugg[paper[1]] = {}
-                            hin_sugg[paper[1]]['ptp'] = self.score(self.ptp_weight, lines_to_read, paper[2])
-                            hin_sugg[paper[1]]['pap'] = 0
-            except FileNotFoundError:
-                pass
+    def _get_scoring_list(self, output):
+        """Gets the scoring list"""
+        scoring_list = sorted(output, key=lambda k: output[k]['overall'], reverse=True)
+        return scoring_list[0:self.output_size]  # keep as many as in the test size
 
-        for sugg in hin_sugg.keys():
-            hin_sugg[sugg]['overall'] = hin_sugg[sugg]['ptp'] + hin_sugg[sugg]['pap']
+    def _write_results(self, *args, **kwargs):
+        raise NotImplementedError()
 
-        hin_sugg_list = sorted(hin_sugg, key=lambda k: hin_sugg[k]['overall'],
-                               reverse=True)  # sort suggestions based on borda count
-        hin_sugg_list = hin_sugg_list[0:self.output_size]  # keep as many as in the test size
+    def run(self):
+        raise NotImplementedError()
 
+
+class PaperVeto(VetoBase):
+    """BaseVeto class for veto"""
+
+    def _calculate_sim_scores(self, entry, train_set, first_key, second_key, weight, output):
+        """Calculate Similarity scores"""
+        try:
+            with open(Path(self.pap_sims, entry)) as pap_paper_file:
+                pap_papers = csv.reader(pap_paper_file, dialect='exp_dialect')
+                lines_to_read = self.sims_per_paper
+                for paper in pap_papers:
+                    if paper[1] in train_set.keys():  # do not consider anyone in the training set
+                        continue
+                    if paper[1] in output.keys():
+                        output[paper[1]][first_key] += self.score(weight, lines_to_read, paper[2])
+                    else:
+                        output[paper[1]] = {}
+                        output[paper[1]][first_key] = self.score(weight, lines_to_read, paper[2])
+                        output[paper[1]][second_key] = 0
+                    lines_to_read -= 1
+                    if lines_to_read == 0:
+                        break
+        except FileNotFoundError:
+            pass
+
+    def _write_results(self, output):
+        """Write the results"""
+        for sugg in output.keys():
+            output[sugg]['overall'] = output[sugg]['ptp'] + output[sugg]['pap']
+
+        scoring_list = self._get_scoring_list(output)
         with open(self.veto_output, 'w', newline='') as hin_sugg_file:
             hin_sugg_writer = csv.writer(hin_sugg_file)
-            for sugg in hin_sugg_list:
+            for sugg in scoring_list:
                 hin_sugg_writer.writerow([sugg,
-                                          round(hin_sugg[sugg]['overall'], 2),
-                                          round(hin_sugg[sugg]['ptp'], 2),
-                                          round(hin_sugg[sugg]['pap'], 2)
+                                          round(output[sugg]['overall'], 2),
+                                          round(output[sugg]['ptp'], 2),
+                                          round(output[sugg]['pap'], 2)
                                           ])
+
+    def run(self):
+        """The Run algorithm"""
+        train_set = self._get_train_set()
+        hin_sugg = {}
+        for entry in train_set:
+            self._calculate_sim_scores(entry, train_set, 'pap', 'ptp', self.pap_weight, hin_sugg)
+            self._calculate_sim_scores(entry, train_set, 'ptp', 'pap', self.ptp_weight, hin_sugg)
+        self._write_results(hin_sugg)
 
 
 if __name__ == '__main__':
