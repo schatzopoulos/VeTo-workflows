@@ -64,7 +64,7 @@ class PaperDBManager:
         self._aminer_mapper_collection.create_index([('aminer_id', pymongo.ASCENDING)],
                                                     unique=True, name='aminer_mapper_aminer_id_uidx')
 
-    def perform_search_queries(self, id_file, max_papers=20):
+    def perform_search_queries(self, id_file, max_papers=50):
         """Performs search queries to the db"""
         # read the veto ids and related them to aminer ids
         veto_ids = [veto_id.strip() for veto_id in open(id_file)]
@@ -89,7 +89,13 @@ class PaperDBManager:
                 max_score -= 1
                 if max_score == 0:
                     break
-        print(json.dumps(res, indent=4))
+        return res
+
+    def out_keyword_search(self, id_file, max_papers=50, max_results=20):
+        """Outputs the results of the keyword search"""
+        res = self.perform_search_queries(id_file, max_papers)
+        for item in sorted(res, key=res.get, reverse=True)[:max_results]:
+            print(item)
 
     @staticmethod
     def _remove_stopwords_and_punctuation(paper_title):

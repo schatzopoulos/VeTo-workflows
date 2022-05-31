@@ -87,8 +87,7 @@ class VetoBase:
 
     def _get_scoring_list(self, output):
         """Gets the scoring list"""
-        scoring_list = sorted(output, key=lambda k: output[k]['overall'], reverse=True)
-        return scoring_list[0:self.output_size]  # keep as many as in the test size
+        return sorted(output, key=lambda k: output[k]['overall'], reverse=True)[:self.output_size]
 
     def _write_results(self, *args, **kwargs):
         raise NotImplementedError()
