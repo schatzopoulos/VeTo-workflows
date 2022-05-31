@@ -47,7 +47,7 @@ class ExtendedPaperVeto(VetoBase):
 
         scoring_list = self._get_scoring_list(output)
         with open(self.veto_output, 'w', newline='') as hin_sugg_file:
-            hin_sugg_writer = csv.writer(hin_sugg_file)
+            hin_sugg_writer = csv.writer(hin_sugg_file, delimiter=',')
             for sugg in scoring_list:
                 hin_sugg_writer.writerow([sugg,
                                           round(output[sugg]['overall'], 2),
