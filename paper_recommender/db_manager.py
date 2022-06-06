@@ -92,7 +92,7 @@ class PaperDBManager:
         """Outputs the results of the keyword search"""
         res = self.perform_search_queries(veto_ids, max_papers)
         for item in sorted(res, key=res.get, reverse=True)[:max_results]:
-            print(item)
+            print(item, res[item])
 
     @staticmethod
     def _remove_stopwords_and_punctuation(paper_title):
