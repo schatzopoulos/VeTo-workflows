@@ -14,12 +14,14 @@ def _parse_user_args():
     """
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-it', '--id_type', choices=['veto', 'aminer'], default='aminer',
-                            help='Convert the ids given their type. Can be aminer or veto')
+                            help='Convert the ids given their type. Can be "aminer" or "veto"')
     arg_parser.add_argument('-p', '--path', required=True, help='path to the newline separated file containing the ids')
+    arg_parser.add_argument('-ap', '--aminer_path', required=True, help='path to the veto to aminer ids file',
+                            default=AMINER_ID_FILEPATH)
     return arg_parser.parse_args()
 
 
-def to_aminer(id_file, id_type='veto'):
+def to_aminer(id_file, id_type='veto', aminer_path=AMINER_ID_FILEPATH):
     ids = []
     with open(id_file, newline='') as outf:
         reader = csv.reader(outf, delimiter='\n')
@@ -31,7 +33,7 @@ def to_aminer(id_file, id_type='veto'):
     search_key = 'id' if id_type == 'veto' else 'aminer_id'
     result_key = 'aminer_id' if id_type == 'veto' else 'id'
 
-    with open(AMINER_ID_FILEPATH, newline='') as csvfile:
+    with open(aminer_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='\t')
         res = {}
         for row in reader:
@@ -45,4 +47,4 @@ def to_aminer(id_file, id_type='veto'):
 
 if __name__ == '__main__':
     args = _parse_user_args()
-    to_aminer(args.path, args.id_type)
+    to_aminer(args.path, args.id_type, args.aminer_path)

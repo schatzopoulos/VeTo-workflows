@@ -70,3 +70,6 @@ Its main parameters are described below:
 | apv_weight | a weighting factor of the APV similarities.
 | apt_weight | a weighting factor of the APT similarities.
 | output_size | an integer number indicating the top authors with the higher aggregated score to be included in the results.
+
+## Paper Recommender
+For the docs please refer [here](https://github.com/gbouzioto/VeTo-workflows/tree/master/paper_recommender/README.md)
