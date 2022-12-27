@@ -72,11 +72,16 @@ The arguments are outlined below:
 |-----------------------------| --- |
 | '-f' / '--files'            | A string containing the dataset filepaths, can be comma separated to included multiple filepaths
 | '-af' / '--aminer_ids_file' | The csv file containing the aminer to veto id mapping
+| '-tw' / '--title_weight'    | The search weight for the paper title
+| '-aw' / '--abstract_weight' | The search weight for the paper abstract
 
 Once built the database will contain 2 collections, 'papers' and 'aminer_mapper'. Papers collection has the exact same columns as the json files provided in the dataset.
 Aminer mapper collection has 2 columns: 'id', namely the veto id and 'aminer_id', namely the aminer id of the paper in the dataset.
 
-An example is outlined below:
+Note: the weight parameters are optional and default to 1, meaning that both abstract and title have equal ranking score. More info on how MongoDB
+performs the ranking based on weights can be found [here](https://www.mongodb.com/docs/manual/tutorial/control-results-of-text-search/).
+
+An example with default weights is outlined below:
 ```
 python3 build_db.py -f '/path/to/dataset_file_1.json /path/to/dataset_file_2.json /path/to/dataset_file_n.json' -af '/path/to/aminer_ids.csv'
 ```

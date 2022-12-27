@@ -20,6 +20,8 @@ class PaperDBManager:
         self._client = None
         self._paper_collection = None
         self._aminer_mapper_collection = None
+        self._title_weight = None
+        self._abstract_weight = None
 
     def __str__(self):
         return f'PaperDBManager(db_id={id(self._db)})'
@@ -57,8 +59,12 @@ class PaperDBManager:
     def _add_indexes(self):
         """Adds indexes to the paper collection"""
         self._paper_collection.create_index([('id', pymongo.ASCENDING)], unique=True, name='papers_id_uidx')
-        self._paper_collection.create_index([('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
-                                            default_language='english', name='papers_title_abstract_txt_idx')
+        self._paper_collection.create_index(
+            [('title', pymongo.TEXT), ('abstract', pymongo.TEXT)],
+            default_language='english',
+            name='papers_title_abstract_txt_idx',
+            weights={'title': self._title_weight, 'abstract': self._abstract_weight}
+        )
         self._aminer_mapper_collection.create_index([('id', pymongo.ASCENDING)],
                                                     unique=True, name='aminer_mapper_id_uidx')
         self._aminer_mapper_collection.create_index([('aminer_id', pymongo.ASCENDING)],
@@ -150,7 +156,9 @@ class PaperDBManager:
         self._add_indexes()
 
     @classmethod
-    def create(cls, database, password=None, username=None, host='localhost', port=27017):
+    def create(
+            cls, database, password=None, username=None, host='localhost', port=27017, title_weight=1, abstract_weight=1
+        ):
         """
         Creates a PaperDBManager instance
 
@@ -159,6 +167,8 @@ class PaperDBManager:
         :param password: password for the specified database user - defaults to None
         :param host: host ip - defaults to localhost
         :param port: connection port - defaults to 27017
+        :param title_weight: the search weight for the title - defaults to 1
+        :param abstract_weight: the search weight for the abstract - defaults to 1
         :rtype: PaperDBManager
         """
         db_manager = cls()
@@ -169,6 +179,8 @@ class PaperDBManager:
             db_manager._db = db
             db_manager._paper_collection = db[cls.PAPER_KEY]
             db_manager._aminer_mapper_collection = db[cls.AMINER_MAPPER_KEY]
+            db_manager._title_weight = title_weight
+            db_manager._abstract_weight = abstract_weight
             return db_manager
         except Exception as error:
             print("Error connecting to MongoDB database", error)
