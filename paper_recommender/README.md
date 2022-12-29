@@ -88,6 +88,28 @@ python3 build_db.py -f '/path/to/dataset_file_1.json /path/to/dataset_file_2.jso
 
 #### Producing Recommendations
 
+##### MongoFTS
+In order to run recommendations using `MongoDB full text search (MongoFTS)` you will need to run the following script [mongo_fts.py](https://github.com/gbouzioto/VeTo-workflows/tree/master/paper_recommender/mongo_fts.py).
+You can find details on how to run it by the command:
+
+Example:
+```
+python3 mongo_fts.py -h
+```
+The arguments are outlined below:
+
+| Argument Name               | Description |
+|-----------------------------| ------------- |
+| '-vf', '--veto_id_file'      | the filepath containing the veto paper ids (**newline separated**)
+| '-mp', '--max_papers'     | max similar paper number per query
+| '-mr', '--max_results'       | max number of results
+Example:
+```
+python3 mongo_fts.py --veto_id_file /path/to/input.txt --max_papers 50 --max_results 20```
+```
+---
+##### PaperVeto
+
 In order to run recommendations using `PaperVeto` you will need to run the following script [paper_veto.py](https://github.com/gbouzioto/VeTo-workflows/tree/master/paper_recommender/paper_veto.py).
 You can find details on how to run it by the command:
 
@@ -114,6 +136,8 @@ Example:
 ```
 python3 paper_veto.py --paper_file /path/to/input.txt --veto_output /path/to/output.csv --pap_sims /path/to/PAP/ --ptp_sims /path/to/PTP/ --sims_per_paper 50 --pap_weight 0.2 --ptp_weight 0.8```
 ```
+---
+##### ExtendedPaperVeto
 
 In order to run recommendations using `ExtendedPaperVeto` you will need to run the following script [extended_paper_veto.py](https://github.com/gbouzioto/VeTo-workflows/tree/master/paper_recommender/extended_paper_veto.py).
 You can find details on how to run it by the command:
@@ -142,7 +166,7 @@ Example:
 ```
 python3 paper_veto.py --paper_file /path/to/input.txt --veto_output /path/to/output.csv --pap_sims /path/to/PAP/ --ptp_sims /path/to/PTP/ --sims_per_paper 50 --pap_weight 0.2 --ptp_weight 0.3 --keyword_weight 0.5```
 ```
-
+---
 #### Helpers
 
 One helper script is also included, [convert_aminer_ids.py](https://github.com/gbouzioto/VeTo-workflows/tree/master/paper_recommender/convert_aminer_ids.py), which can convert veto ids to aminer and vice versa.
