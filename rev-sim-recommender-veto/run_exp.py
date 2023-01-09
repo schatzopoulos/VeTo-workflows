@@ -92,8 +92,8 @@ try:
         hin_sugg_list = sorted(hin_sugg,key=lambda k: hin_sugg[k]['overall'], reverse=True) #sort suggestions based on borda count
         hin_sugg_list = hin_sugg_list[0:output_size] #keep as many as in the test size
 
-        with open(output_file, 'w') as hin_sugg_file:
-            hin_sugg_writer = csv.writer(hin_sugg_file,dialect='exp_dialect')
+        with open(output_file, 'w', newline='') as hin_sugg_file:
+            hin_sugg_writer = csv.writer(hin_sugg_file, delimiter=',')
             for sugg in hin_sugg_list:
                 hin_sugg_writer.writerow([sugg, hin_sugg[sugg]['overall'], hin_sugg[sugg]['apt'], hin_sugg[sugg]['apv']])
         hin_sugg_file.close()

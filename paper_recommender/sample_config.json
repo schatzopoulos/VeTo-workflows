@@ -1,0 +1,6 @@
+{
+    "pap_hin":"/data/VeTo/VeTo-data/PAP-HIN.csv",
+    "ptp_hin":"/data/VeTo/VeTo-data/PTP-HIN.csv",
+    "pap_sims_dir":"/data/VeTo/VeTo-results/PAP_SIMS",
+    "ptp_sims_dir":"/data/VeTo/VeTo-results/PTP_SIMS"
+}
